@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#0d1a38"/>
+
+  <defs>
+    <!-- Clip top half of rings (above the bar) -->
+    <clipPath id="ct">
+      <rect x="0" y="0" width="512" height="244"/>
+    </clipPath>
+    <!-- Clip bottom half of rings (below the bar) -->
+    <clipPath id="cb">
+      <rect x="0" y="268" width="512" height="244"/>
+    </clipPath>
+  </defs>
+
+  <!-- Top half: outer ring -->
+  <g clip-path="url(#ct)">
+    <circle cx="256" cy="256" r="160" fill="#f0f3fa"/>
+    <circle cx="256" cy="256" r="108" fill="#0d1a38"/>
+  </g>
+
+  <!-- Bottom half: outer ring -->
+  <g clip-path="url(#cb)">
+    <circle cx="256" cy="256" r="160" fill="#f0f3fa"/>
+    <circle cx="256" cy="256" r="108" fill="#0d1a38"/>
+  </g>
+
+  <!-- Horizontal bar through the center -->
+  <rect x="88" y="244" width="336" height="24" rx="4" fill="#f0f3fa"/>
+</svg>

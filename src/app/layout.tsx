@@ -10,9 +10,9 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Rituo | Una pausa, por elección",
+  title: "rituo — Volvé al presente.",
   description:
-    "Un tag NFC para activar rituales de foco y volver a lo importante.",
+    "rituo convierte el impulso de abrir una app en una decisión consciente, agregando un pequeño ritual entre vos y las distracciones.",
 };
 
 export default function RootLayout({

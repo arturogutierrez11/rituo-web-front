@@ -1,15 +1,13 @@
 import type { WaitlistPayload, WaitlistResponse } from "@/types/waitlist";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
-
 export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(path, {
     ...init,
     headers: {
+      Accept: "application/json",
       "Content-Type": "application/json",
       ...init?.headers,
     },
@@ -29,7 +27,7 @@ export async function apiFetch<T>(
 }
 
 export function joinWaitlist(payload: WaitlistPayload) {
-  return apiFetch<WaitlistResponse>("/waitlist", {
+  return apiFetch<WaitlistResponse>("/api/waitlist-leads", {
     method: "POST",
     body: JSON.stringify(payload),
   });

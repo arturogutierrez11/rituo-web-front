@@ -66,7 +66,7 @@ export function WaitlistForm() {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       email: form.email.trim().toLowerCase(),
-      phoneNumber: form.phoneNumber.trim() || undefined,
+      phoneNumber: form.phoneNumber.trim(),
       operatingSystem: form.operatingSystem,
     };
 
@@ -130,12 +130,13 @@ export function WaitlistForm() {
 
       <div className="waitlist-form__grid">
         <label>
-          Teléfono <span style={{ opacity: 0.46, fontWeight: 600 }}>(opcional)</span>
+          Teléfono
           <input
             autoComplete="tel"
             name="phoneNumber"
             onChange={(e) => updateField("phoneNumber", e.target.value)}
             placeholder="+54 9 11 0000 0000"
+            required
             type="tel"
             value={form.phoneNumber}
           />

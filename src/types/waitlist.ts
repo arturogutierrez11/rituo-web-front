@@ -4,11 +4,17 @@ export interface WaitlistPayload {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber?: string;
+  phoneNumber: string;
   operatingSystem: OperatingSystem;
 }
 
 export interface WaitlistResponse {
   id?: string;
   ok?: boolean;
+}
+
+export interface WaitlistLead extends WaitlistPayload {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
 }
