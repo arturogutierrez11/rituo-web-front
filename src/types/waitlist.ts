@@ -1,14 +1,11 @@
-export type WaitlistInterest = "personal" | "family" | "business";
+export type OperatingSystem = "iOS" | "Android";
 
 export interface WaitlistPayload {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone?: string;
-  interest: WaitlistInterest;
-  quantity?: number;
-  company?: string;
-  message?: string;
-  source: "web-presale";
+  phoneNumber?: string;
+  operatingSystem: OperatingSystem;
 }
 
 export interface WaitlistResponse {

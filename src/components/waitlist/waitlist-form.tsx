@@ -1,74 +1,60 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 import { joinWaitlist } from "@/services/api";
-import type { WaitlistInterest, WaitlistPayload } from "@/types/waitlist";
+import type { OperatingSystem, WaitlistPayload } from "@/types/waitlist";
 
-const interestOptions: Array<{
-  value: WaitlistInterest;
-  label: string;
-  description: string;
-}> = [
+const osOptions: Array<{ value: OperatingSystem; label: string; icon: React.ReactNode }> = [
   {
-    value: "personal",
-    label: "Para mí",
-    description: "Quiero reservar una tarjeta para uso personal.",
+    value: "iOS",
+    label: "iPhone",
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <rect x="6" y="2" width="10" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M9 4.5h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="11" cy="17.5" r="1" fill="currentColor" />
+      </svg>
+    ),
   },
   {
-    value: "family",
-    label: "Familia",
-    description: "Me interesa bloquear apps y acompañar hábitos en casa.",
-  },
-  {
-    value: "business",
-    label: "Empresa",
-    description: "Necesito más de 10 tarjetas para un equipo.",
+    value: "Android",
+    label: "Android",
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <path d="M5 13.5V9a6 6 0 0 1 12 0v4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <rect x="3" y="9" width="3" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="16" y="9" width="3" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M8 17h6M9 19h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 3.5l1 1.5M14 3.5l-1 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
   },
 ];
 
 interface FormState {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone: string;
-  interest: WaitlistInterest;
-  quantity: string;
-  company: string;
-  message: string;
+  phoneNumber: string;
+  operatingSystem: OperatingSystem;
 }
 
 const initialState: FormState = {
-  name: "",
+  firstName: "",
+  lastName: "",
   email: "",
-  phone: "",
-  interest: "personal",
-  quantity: "1",
-  company: "",
-  message: "",
+  phoneNumber: "",
+  operatingSystem: "iOS",
 };
 
 export function WaitlistForm() {
   const [form, setForm] = useState<FormState>(initialState);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle",
-  );
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const selectedInterest = useMemo(
-    () => interestOptions.find((option) => option.value === form.interest),
-    [form.interest],
-  );
-
-  function updateField<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
-    setForm((current) => {
-      const next = { ...current, [key]: value };
-
-      if (key === "interest") {
-        next.quantity = value === "business" ? "11" : "1";
-      }
-
-      return next;
-    });
+  function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -76,18 +62,12 @@ export function WaitlistForm() {
     setStatus("loading");
     setErrorMessage("");
 
-    const quantity = Number.parseInt(form.quantity, 10);
-    const safeQuantity = Number.isFinite(quantity) ? quantity : 1;
-
     const payload: WaitlistPayload = {
-      name: form.name.trim(),
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
       email: form.email.trim().toLowerCase(),
-      phone: form.phone.trim() || undefined,
-      interest: form.interest,
-      quantity: form.interest === "business" ? Math.max(11, safeQuantity) : safeQuantity,
-      company: form.company.trim() || undefined,
-      message: form.message.trim() || undefined,
-      source: "web-presale",
+      phoneNumber: form.phoneNumber.trim() || undefined,
+      operatingSystem: form.operatingSystem,
     };
 
     try {
@@ -97,9 +77,7 @@ export function WaitlistForm() {
     } catch (error) {
       console.error(error);
       setStatus("error");
-      setErrorMessage(
-        "No pudimos guardar tus datos. Probá de nuevo en unos segundos.",
-      );
+      setErrorMessage("No pudimos guardar tus datos. Probá de nuevo en unos segundos.");
     }
   }
 
@@ -114,20 +92,34 @@ export function WaitlistForm() {
         <label>
           Nombre
           <input
-            autoComplete="name"
-            name="name"
-            onChange={(event) => updateField("name", event.target.value)}
+            autoComplete="given-name"
+            name="firstName"
+            onChange={(e) => updateField("firstName", e.target.value)}
             placeholder="Tu nombre"
             required
-            value={form.name}
+            value={form.firstName}
           />
         </label>
+        <label>
+          Apellido
+          <input
+            autoComplete="family-name"
+            name="lastName"
+            onChange={(e) => updateField("lastName", e.target.value)}
+            placeholder="Tu apellido"
+            required
+            value={form.lastName}
+          />
+        </label>
+      </div>
+
+      <div className="waitlist-form__grid">
         <label>
           Email
           <input
             autoComplete="email"
             name="email"
-            onChange={(event) => updateField("email", event.target.value)}
+            onChange={(e) => updateField("email", e.target.value)}
             placeholder="nombre@email.com"
             required
             type="email"
@@ -136,92 +128,63 @@ export function WaitlistForm() {
         </label>
       </div>
 
-      <div className="waitlist-form__grid waitlist-form__grid--two">
+      <div className="waitlist-form__grid">
         <label>
-          Teléfono
+          Teléfono <span style={{ opacity: 0.46, fontWeight: 600 }}>(opcional)</span>
           <input
             autoComplete="tel"
-            name="phone"
-            onChange={(event) => updateField("phone", event.target.value)}
+            name="phoneNumber"
+            onChange={(e) => updateField("phoneNumber", e.target.value)}
             placeholder="+54 9 11 0000 0000"
             type="tel"
-            value={form.phone}
-          />
-        </label>
-        <label>
-          Cantidad estimada
-          <input
-            min={form.interest === "business" ? 11 : 1}
-            name="quantity"
-            onChange={(event) => updateField("quantity", event.target.value)}
-            type="number"
-            value={form.quantity}
+            value={form.phoneNumber}
           />
         </label>
       </div>
 
-      <fieldset className="waitlist-form__interest">
-        <legend>¿Qué querés reservar?</legend>
-        <div className="waitlist-form__options">
-          {interestOptions.map((option) => (
+      <fieldset style={{ margin: 0, padding: 0, border: 0 }}>
+        <legend
+          style={{
+            color: "rgba(240,243,250,0.78)",
+            fontSize: "0.74rem",
+            fontWeight: 800,
+            marginBottom: 0,
+            padding: 0,
+          }}
+        >
+          ¿Qué teléfono usás?
+        </legend>
+        <div className="os-toggle">
+          {osOptions.map((opt) => (
             <label
-              className={
-                form.interest === option.value
-                  ? "waitlist-option is-selected"
-                  : "waitlist-option"
-              }
-              key={option.value}
+              key={opt.value}
+              className={`os-toggle__option${form.operatingSystem === opt.value ? " is-selected" : ""}`}
             >
               <input
-                checked={form.interest === option.value}
-                name="interest"
-                onChange={() => updateField("interest", option.value)}
+                checked={form.operatingSystem === opt.value}
+                name="operatingSystem"
+                onChange={() => updateField("operatingSystem", opt.value)}
                 type="radio"
-                value={option.value}
+                value={opt.value}
               />
-              <span />
-              <strong>{option.label}</strong>
-              <small>{option.description}</small>
+              <span className="os-toggle__icon">{opt.icon}</span>
+              <span className="os-toggle__label">{opt.label}</span>
+              <span className="os-toggle__dot" />
             </label>
           ))}
         </div>
       </fieldset>
 
-      {form.interest === "business" && (
-        <label>
-          Empresa
-          <input
-            autoComplete="organization"
-            name="company"
-            onChange={(event) => updateField("company", event.target.value)}
-            placeholder="Nombre de la empresa"
-            value={form.company}
-          />
-        </label>
-      )}
-
-      <label>
-        Mensaje opcional
-        <textarea
-          name="message"
-          onChange={(event) => updateField("message", event.target.value)}
-          placeholder="Contanos qué tipo de ritual querés armar"
-          rows={4}
-          value={form.message}
-        />
-      </label>
-
       <div className="waitlist-form__footer">
         <p>
-          {selectedInterest?.description} Te vamos a escribir cuando abramos la
-          primera tanda.
+          Te avisamos antes de abrir la primera tanda con prioridad de compra.
         </p>
         <button
           className="button-link button-link--light waitlist-form__submit"
           disabled={status === "loading"}
           type="submit"
         >
-          {status === "loading" ? "Guardando..." : "Sumarme a la lista"}
+          {status === "loading" ? "Guardando..." : "Sumarme →"}
         </button>
       </div>
 

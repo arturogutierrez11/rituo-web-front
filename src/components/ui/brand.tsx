@@ -9,13 +9,12 @@ export function Brand({ compact = false }: BrandProps) {
     <a className="brand" href="#inicio" aria-label="Rituo, volver al inicio">
       <Image
         src="/images/rituo-logo-white.png"
-        alt=""
-        width={32}
-        height={32}
+        alt="Rituo"
+        width={843}
+        height={488}
         className="brand__logo"
-        aria-hidden="true"
+        priority
       />
-      <span className="brand__word">rituo</span>
       {!compact && <span className="brand__dot" aria-hidden="true" />}
     </a>
   );

@@ -4,14 +4,11 @@ export function Footer() {
   return (
     <footer className="footer">
       <Brand compact />
-      <p>Una tecnología simple para estar donde elegís estar.</p>
-      <div className="footer__right">
-        <p className="footer__legal">© 2026 Rituo · Todos los derechos reservados</p>
-        <div className="footer__links">
-          <a href="#">Términos</a>
-          <a href="#">Privacidad</a>
-        </div>
-      </div>
+      <p>© 2026 Rituo · Todos los derechos reservados</p>
+      <nav className="footer__links" aria-label="Legal">
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+      </nav>
     </footer>
   );
 }
