@@ -180,6 +180,12 @@
   background: rgba(156,178,198,0.10);
 }
 
+.reset-notice--info {
+  color: #dce6f0;
+  border: 1px solid rgba(156,178,198,0.18);
+  background: rgba(156,178,198,0.08);
+}
+
 .reset-notice--error {
   color: #ffd8d8;
   border: 1px solid rgba(255,140,140,0.22);
