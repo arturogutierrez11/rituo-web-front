@@ -6,8 +6,7 @@ export function Footer() {
       <Brand compact />
       <p>© 2026 Rituo · Todos los derechos reservados</p>
       <nav className="footer__links" aria-label="Legal">
-        <a href="#">Términos</a>
-        <a href="#">Privacidad</a>
+        <a href="/legal/terminos-y-condiciones">Términos</a>
       </nav>
     </footer>
   );

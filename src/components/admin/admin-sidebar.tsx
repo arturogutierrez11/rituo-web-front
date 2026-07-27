@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const sections = [
   {
@@ -7,9 +10,17 @@ const sections = [
     description: "Leads de preventa",
     shortLabel: "WL",
   },
+  {
+    href: "/rituo-admin/legal",
+    label: "Documentos legales",
+    description: "Versiones y publicación",
+    shortLabel: "TC",
+  },
 ];
 
 export function AdminSidebar() {
+  const pathname = usePathname();
+
   return (
     <aside className="admin-sidebar" aria-label="Panel de administración">
       <div>
@@ -28,7 +39,9 @@ export function AdminSidebar() {
       <nav className="admin-nav" aria-label="Secciones">
         {sections.map((section) => (
           <Link
-            className="admin-nav__item is-active"
+            className={`admin-nav__item${
+              pathname === section.href ? " is-active" : ""
+            }`}
             href={section.href}
             key={section.href}
           >
