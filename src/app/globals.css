@@ -2149,6 +2149,45 @@ main { position: relative; z-index: 1; }
   padding: 13px 14px;
 }
 
+.app-update-preview {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+}
+
+.app-update-preview > span,
+.app-update-preview > small {
+  color: var(--muted);
+}
+
+.app-update-preview > strong {
+  color: var(--ink);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+.app-update-preview > div {
+  border: 1px solid rgba(142, 166, 207, 0.18);
+  border-radius: 24px;
+  padding: 24px;
+  background: rgba(20, 25, 46, 0.72);
+}
+
+.app-update-preview h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+
+.app-update-preview p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.app-update-preview a {
+  color: #9dbaff;
+  font-weight: 700;
+}
+
 .legal-admin-feedback {
   color: var(--ink);
 }

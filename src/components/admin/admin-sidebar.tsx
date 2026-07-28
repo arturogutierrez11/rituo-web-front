@@ -16,6 +16,12 @@ const sections = [
     description: "Versiones y publicación",
     shortLabel: "TC",
   },
+  {
+    href: "/rituo-admin/app-update",
+    label: "Versión de la app",
+    description: "Avisos de actualización",
+    shortLabel: "APP",
+  },
 ];
 
 export function AdminSidebar() {
@@ -31,8 +37,8 @@ export function AdminSidebar() {
 
         <div className="admin-sidebar__intro">
           <span>Admin</span>
-          <strong>Panel de preventa</strong>
-          <p>Control simple para revisar los interesados que entran desde la landing.</p>
+          <strong>Panel de rituo</strong>
+          <p>Gestión interna de la plataforma, la app y sus contenidos.</p>
         </div>
       </div>
 
@@ -56,7 +62,7 @@ export function AdminSidebar() {
 
       <div className="admin-sidebar__footer">
         <span>Acceso interno</span>
-        <strong>Rituo Landing</strong>
+        <strong>Rituo Admin</strong>
       </div>
     </aside>
   );
