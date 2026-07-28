@@ -6,7 +6,7 @@ import type { WaitlistPayload } from "@/types/waitlist";
 const BACKEND_API_URL =
   process.env.RITUO_API_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  "http://159.89.37.132";
+  "https://api.rituo.io";
 
 
 function getCreatedLeadId(data: unknown) {

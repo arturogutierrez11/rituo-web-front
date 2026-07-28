@@ -2,7 +2,7 @@ import "server-only";
 
 import type { WaitlistLead } from "@/types/waitlist";
 
-const DEFAULT_BACKEND_API_URL = "http://159.89.37.132";
+const DEFAULT_BACKEND_API_URL = "https://api.rituo.io";
 
 function getBackendApiUrl() {
   return (
