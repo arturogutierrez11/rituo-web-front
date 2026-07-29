@@ -2149,6 +2149,84 @@ main { position: relative; z-index: 1; }
   padding: 13px 14px;
 }
 
+.support-user {
+  display: flex;
+  width: calc(100% - 52px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 26px 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(4, 8, 20, 0.42);
+  color: var(--ink);
+  text-align: left;
+}
+
+.support-user:hover,
+.support-user.is-selected {
+  border-color: var(--accent);
+  background: rgba(156, 178, 198, 0.10);
+}
+
+.support-user span:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.support-user small,
+.support-user > span:last-child {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.support-reset-summary {
+  padding: 16px;
+  border: 1px solid rgba(255, 140, 140, 0.22);
+  border-radius: 16px;
+  background: rgba(140, 40, 40, 0.10);
+}
+
+.support-reset-summary p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.support-reset-summary b {
+  display: block;
+  margin-top: 10px;
+  color: #ffb1b1;
+  font-size: 0.75rem;
+}
+
+.support-confirm {
+  grid-template-columns: 22px 1fr !important;
+  align-items: start;
+  line-height: 1.5;
+}
+
+.support-confirm input {
+  min-height: auto;
+  margin-top: 2px;
+}
+
+.support-reset-button {
+  min-height: 48px;
+  border: 1px solid rgba(255, 120, 120, 0.34);
+  border-radius: 999px;
+  background: rgba(190, 45, 45, 0.88);
+  color: white;
+  font-weight: 900;
+}
+
+.support-reset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
 .app-update-preview {
   display: grid;
   gap: 18px;

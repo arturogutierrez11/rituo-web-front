@@ -22,6 +22,12 @@ const sections = [
     description: "Avisos de actualización",
     shortLabel: "APP",
   },
+  {
+    href: "/rituo-admin/support-reset",
+    label: "Rescate de usuario",
+    description: "Liberar restricciones",
+    shortLabel: "SOS",
+  },
 ];
 
 export function AdminSidebar() {
