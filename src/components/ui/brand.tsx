@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 interface BrandProps {
   compact?: boolean;
@@ -6,7 +7,7 @@ interface BrandProps {
 
 export function Brand({ compact = false }: BrandProps) {
   return (
-    <a className="brand" href="#inicio" aria-label="Rituo, volver al inicio">
+    <Link className="brand" href="/#inicio" aria-label="Rituo, volver al inicio">
       <Image
         src="/images/rituo-logo-white.png"
         alt="Rituo"
@@ -16,6 +17,6 @@ export function Brand({ compact = false }: BrandProps) {
         priority
       />
       {!compact && <span className="brand__dot" aria-hidden="true" />}
-    </a>
+    </Link>
   );
 }
