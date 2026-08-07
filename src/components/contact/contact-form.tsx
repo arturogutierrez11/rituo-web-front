@@ -12,7 +12,21 @@ const initialForm: ContactPayload = {
   website: "",
 };
 
-export function ContactForm() {
+interface ContactFormProps {
+  description?: string;
+  eyebrow?: string;
+  footerText?: string;
+  subjectPlaceholder?: string;
+  title?: string;
+}
+
+export function ContactForm({
+  description = "Contanos en qué podemos ayudarte y te respondemos por email.",
+  eyebrow = "Contacto",
+  footerText = "También podés escribirnos a hello@rituo.io.",
+  subjectPlaceholder = "¿Sobre qué querés hablar?",
+  title = "Escribinos",
+}: ContactFormProps = {}) {
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -60,9 +74,9 @@ export function ContactForm() {
   return (
     <form className="contact-form" onSubmit={handleSubmit}>
       <div className="contact-form__heading">
-        <span>Contacto</span>
-        <h2>Escribinos</h2>
-        <p>Contanos en qué podemos ayudarte y te respondemos por email.</p>
+        <span>{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
       </div>
 
       <div className="contact-form__fields contact-form__fields--two">
@@ -99,7 +113,7 @@ export function ContactForm() {
           maxLength={120}
           name="subject"
           onChange={(event) => updateField("subject", event.target.value)}
-          placeholder="¿Sobre qué querés hablar?"
+          placeholder={subjectPlaceholder}
           required
           value={form.subject}
         />
@@ -130,7 +144,7 @@ export function ContactForm() {
       </label>
 
       <div className="contact-form__footer">
-        <p>También podés escribirnos a hello@rituo.io.</p>
+        <p>{footerText}</p>
         <button className="btn btn--primary" disabled={status === "loading"} type="submit">
           {status === "loading" ? "Enviando..." : "Enviar mensaje →"}
         </button>

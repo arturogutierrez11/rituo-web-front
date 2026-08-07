@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ContactForm } from "@/components/contact/contact-form";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
+import { InstagramEmbed } from "@/components/social/instagram-embed";
 
 export const metadata: Metadata = {
   title: "Redes y contacto — rituo",
@@ -75,6 +76,15 @@ export default function SocialsPage() {
             );
           })}
         </div>
+      </section>
+
+      <section className="social-post-section">
+        <div className="social-post-section__heading">
+          <span className="eyebrow eyebrow--center">Desde Instagram</span>
+          <h2>Conocé más sobre rituo</h2>
+          <p>Mirá nuestra última publicación y seguinos para acompañar todo lo que viene.</p>
+        </div>
+        <InstagramEmbed permalink="https://www.instagram.com/reel/DaTkzKeKnQh/" />
       </section>
 
       <section className="contact-section">
