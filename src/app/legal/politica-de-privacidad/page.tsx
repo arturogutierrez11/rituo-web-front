@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Términos y condiciones | Rituo",
-  description: "Términos y Condiciones Generales de Rituo, versión 1.1.",
+  title: "Política de privacidad | Rituo",
+  description: "Política de Privacidad de Rituo, versión 1.1.",
 };
 
-export default function TermsPage() {
-  const pdfUrl = "/legal/terminos-y-condiciones-1.1.pdf";
+export default function PrivacyPolicyPage() {
+  const pdfUrl = "/legal/politica-de-privacidad-1.1.pdf";
 
   return (
     <main className="legal-public">
@@ -18,8 +18,8 @@ export default function TermsPage() {
         </Link>
         <div>
           <span>Versión 1.1</span>
-          <h1>Términos y condiciones</h1>
-          <p>Vigentes desde el 8 de agosto de 2026.</p>
+          <h1>Política de privacidad</h1>
+          <p>Vigente desde el 8 de agosto de 2026.</p>
         </div>
         <a className="admin-refresh" href={pdfUrl} download>
           Descargar PDF
@@ -29,7 +29,7 @@ export default function TermsPage() {
       <iframe
         className="legal-public__document"
         src={pdfUrl}
-        title="Términos y Condiciones Generales Rituo versión 1.1"
+        title="Política de Privacidad Rituo versión 1.1"
       />
     </main>
   );

@@ -9,6 +9,7 @@ export function Footer() {
         <a href="/redes">Redes y contacto</a>
         <a href="/soporte">Soporte</a>
         <a href="/legal/terminos-y-condiciones">Términos</a>
+        <a href="/legal/politica-de-privacidad">Privacidad</a>
       </nav>
     </footer>
   );
