@@ -11,16 +11,14 @@ export function DownloadHero() {
       </h1>
 
       <p className="download-hero__desc">
-        La app de rituo llega a App Store y Google Play. Configurá tus
-        rituales de foco, activalos con un toque de tu Rituo Tag y volvé al
-        presente, todos los días.
+        Configurá tus rituales de foco, activalos con un toque de tu Rituo
+        Tag y volvé al presente, todos los días.
       </p>
 
-      <StoreButtons comingSoon />
+      <StoreButtons />
 
       <p className="download-hero__note">
-        Todavía estamos puliendo el lanzamiento. Sumate a la lista de espera
-        y te avisamos apenas esté disponible para descargar.
+        Ya disponible para iPhone. La versión para Android está en camino.
       </p>
 
       <div className="download-hero__visual" aria-hidden="true">

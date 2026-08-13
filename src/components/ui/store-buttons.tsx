@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 
-// TODO: reemplazar por las URLs reales cuando la app esté publicada.
-const APP_STORE_URL = "#";
-const PLAY_STORE_URL = "#";
+const APP_STORE_URL = "https://apps.apple.com/app/rituo/id6759930487";
 
 function AppleIcon() {
   return (
@@ -41,6 +39,7 @@ interface StoreLinkConfig {
   href: string;
   eyebrow: string;
   label: string;
+  status: "live" | "soon";
   icon: ReactNode;
 }
 
@@ -50,43 +49,62 @@ const stores: StoreLinkConfig[] = [
     href: APP_STORE_URL,
     eyebrow: "Descargar en",
     label: "App Store",
+    status: "live",
     icon: <AppleIcon />,
   },
   {
     id: "google-play",
-    href: PLAY_STORE_URL,
+    href: "#",
     eyebrow: "Disponible en",
     label: "Google Play",
+    status: "soon",
     icon: <GooglePlayIcon />,
   },
 ];
 
-interface StoreButtonsProps {
-  /** La app todavía no está publicada: los botones llevan a la lista de espera. */
-  comingSoon?: boolean;
-  fallbackHref?: string;
-}
-
-export function StoreButtons({ comingSoon = false, fallbackHref = "/#lista-de-espera" }: StoreButtonsProps) {
+export function StoreButtons() {
   return (
     <div className="store-buttons">
-      {stores.map((store) => (
-        <a
-          key={store.id}
-          className="store-button"
-          href={comingSoon ? fallbackHref : store.href}
-          {...(comingSoon ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-        >
-          <span className="store-button__icon" aria-hidden="true">
-            {store.icon}
-          </span>
-          <span className="store-button__copy">
-            <span className="store-button__eyebrow">{store.eyebrow}</span>
-            <span className="store-button__label">{store.label}</span>
-          </span>
-          {comingSoon && <span className="store-button__badge">Muy pronto</span>}
-        </a>
-      ))}
+      {stores.map((store) => {
+        const content = (
+          <>
+            <span className="store-button__icon" aria-hidden="true">
+              {store.icon}
+            </span>
+            <span className="store-button__copy">
+              <span className="store-button__eyebrow">{store.eyebrow}</span>
+              <span className="store-button__label">{store.label}</span>
+            </span>
+            {store.status === "soon" && (
+              <span className="store-button__badge">Muy pronto</span>
+            )}
+          </>
+        );
+
+        if (store.status === "soon") {
+          return (
+            <span
+              key={store.id}
+              className="store-button store-button--soon"
+              aria-disabled="true"
+            >
+              {content}
+            </span>
+          );
+        }
+
+        return (
+          <a
+            key={store.id}
+            className="store-button"
+            href={store.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {content}
+          </a>
+        );
+      })}
     </div>
   );
 }

@@ -18,16 +18,19 @@ export function Hero() {
           />
         </div>
 
+        <p className="hero__eyebrow-chip">App + Tarjeta NFC</p>
+
         <h1>Volvé al presente.</h1>
 
         <p className="hero__desc">
-          rituo convierte el impulso de abrir una app en una decisión
-          consciente, agregando un pequeño ritual entre vos y las distracciones.
+          Rituo bloquea las apps que te distraen y solo las desbloqueás
+          acercando tu Rituo Tag, una tarjeta física. Ese pequeño gesto
+          convierte el impulso de abrir el celular en una decisión consciente.
         </p>
 
         <div className="hero__ctas">
-          <a href="#lista-de-espera" className="btn btn--primary">
-            Sumarme a la lista
+          <a href="#comprar" className="btn btn--primary">
+            Comprar mi Rituo
           </a>
           <a href="#como-funciona" className="btn btn--ghost">
             Cómo funciona →
