@@ -1,4 +1,4 @@
-import type { Product } from "@/types/product";
+import type { ProductMarketing } from "@/types/product";
 import type { Step } from "@/types/step";
 
 export const steps: Step[] = [
@@ -20,13 +20,15 @@ export const steps: Step[] = [
   },
 ];
 
-export const products: Product[] = [
+/**
+ * Contenido de marketing por slug — precio, stock y nombre "oficial" del
+ * producto vienen de checkout.api (ver src/lib/merge-products.ts). Los slugs
+ * acá tienen que matchear los `slug` que devuelve GET /products en checkout.api.
+ */
+export const productsMarketing: ProductMarketing[] = [
   {
-    id: "rituo-tag-one",
-    name: "Rituo Tag One",
+    slug: "tag-one",
     description: "Tarjeta NFC + packaging premium + acceso a rituales de foco.",
-    price: 19900,
-    currency: "ARS",
     image: "/images/rituo-one.png",
     imageAlt: "Packaging abierto de Rituo Tag One",
     variant: "one",
@@ -34,31 +36,24 @@ export const products: Product[] = [
     features: ["1 tag NFC", "Packaging premium"],
   },
   {
-    id: "rituo-tag-family",
-    name: "Rituo Tag Family",
+    slug: "tag-two",
     description:
-      "Tarjeta NFC + packaging premium + acceso a rituales de foco, webs bloqueadas y control.",
-    price: 59900,
-    currency: "ARS",
+      "Pack de 2 tarjetas NFC + packaging premium + acceso a rituales de foco, webs bloqueadas y control.",
     image: "/images/rituo-family-new.png",
     imageAlt: "Padre usando Rituo para bloquear aplicaciones",
     variant: "family",
     label: "Para acompañar",
-    features: ["Control familiar", "Apps y horarios"],
+    features: ["2 tags NFC", "Control familiar", "Apps y horarios"],
   },
   {
-    id: "rituo-empresas",
-    name: "Rituo Empresas",
+    slug: "tag-ten",
     description:
-      "Equipá a tu equipo con tags NFC y rituales de foco pensados para organizaciones.",
-    price: 19900,
-    currency: "ARS",
+      "Pack de 10 tags NFC y rituales de foco pensados para organizaciones.",
     image: "/images/rituo-hero.png",
-    imageAlt: "Pack de tarjetas NFC Rituo para empresas",
+    imageAlt: "Pack de tarjetas NFC Rituo para equipos",
     variant: "business",
     label: "Para equipos",
     ctaLabel: "Comprar para mi equipo",
-    features: ["Más de 10 tags", "Onboarding para equipos", "Soporte directo"],
-    minimumQuantity: 11,
+    features: ["10 tags NFC", "Onboarding para equipos", "Soporte directo"],
   },
 ];

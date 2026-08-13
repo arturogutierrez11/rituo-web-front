@@ -1,16 +1,26 @@
 export type ProductVariant = "one" | "family" | "business";
 
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: "ARS";
+/** Contenido de marketing, propio de la web (no vive en checkout.api). */
+export interface ProductMarketing {
+  slug: string;
   image: string;
   imageAlt: string;
   variant: ProductVariant;
   label: string;
+  description: string;
   ctaLabel?: string;
   features?: string[];
-  minimumQuantity?: number;
 }
+
+/** Datos comerciales: fuente de verdad es checkout.api. */
+export interface ProductCommerce {
+  slug: string;
+  sku: string;
+  name: string;
+  price: number;
+  currency: string;
+  inStock: boolean;
+}
+
+/** Lo que consumen los componentes: marketing + comercial combinados por slug. */
+export interface Product extends ProductMarketing, ProductCommerce {}

@@ -9,9 +9,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const minimumQuantity = product.minimumQuantity ?? 1;
-  const displayedPrice = product.price * minimumQuantity;
-
   return (
     <article className={`product-card product-card--${product.variant}`}>
       <div className="product-card__content">
@@ -28,15 +25,17 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
 
         <div className="product-card__purchase">
-          <span>{minimumQuantity > 1 ? "Desde" : "Precio final"}</span>
-          <strong>{formatCurrency(displayedPrice, product.currency)}</strong>
-          {minimumQuantity > 1 && (
-            <small>{minimumQuantity} unidades incluidas</small>
-          )}
+          <span>Precio final</span>
+          <strong>{formatCurrency(product.price, product.currency)}</strong>
         </div>
 
-        <ButtonLink href={`/checkout?product=${product.id}`}>
-          {product.ctaLabel ?? "Iniciar compra"}
+        <ButtonLink
+          href={`/checkout?product=${product.slug}`}
+          aria-disabled={!product.inStock}
+        >
+          {product.inStock
+            ? (product.ctaLabel ?? "Iniciar compra")
+            : "Sin stock"}
         </ButtonLink>
       </div>
       <div className="product-card__media">

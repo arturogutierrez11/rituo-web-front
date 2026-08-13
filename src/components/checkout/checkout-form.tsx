@@ -6,26 +6,24 @@ import { useMemo, useState, type FormEvent } from "react";
 
 import { Brand } from "@/components/ui/brand";
 import { formatCurrency } from "@/lib/format-currency";
+import { shippingPrices } from "@/lib/shipping";
+import type { ShippingMethod } from "@/types/checkout";
 import type { Product } from "@/types/product";
 
 interface CheckoutFormProps {
   product: Product;
 }
 
-type ShippingMethod = "standard" | "express";
-type PaymentMethod = "card" | "transfer";
-
-const shippingPrices: Record<ShippingMethod, number> = {
-  standard: 0,
-  express: 4900,
-};
-
 export function CheckoutForm({ product }: CheckoutFormProps) {
-  const minimumQuantity = product.minimumQuantity ?? 1;
-  const [quantity, setQuantity] = useState(minimumQuantity);
+  const [quantity, setQuantity] = useState(1);
   const [shipping, setShipping] = useState<ShippingMethod>("standard");
-  const [payment, setPayment] = useState<PaymentMethod>("card");
-  const [submitted, setSubmitted] = useState(false);
+  const [useShippingAsBilling, setUseShippingAsBilling] = useState(true);
+  const [isBusinessPurchase, setIsBusinessPurchase] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState(() =>
+    crypto.randomUUID(),
+  );
 
   const subtotal = product.price * quantity;
   const shippingPrice = shippingPrices[shipping];
@@ -34,9 +32,86 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
     [shippingPrice, subtotal],
   );
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
+    setErrorMessage(null);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    setIsSubmitting(true);
+
+    const payload = {
+      productSlug: product.slug,
+      quantity,
+      shippingMethod: shipping,
+      customer: {
+        firstName: formData.get("firstName"),
+        lastName: formData.get("lastName"),
+        email: formData.get("email"),
+        phone: formData.get("phone"),
+      },
+      shippingAddress: {
+        address: formData.get("address"),
+        city: formData.get("city"),
+        province: formData.get("province"),
+        postalCode: formData.get("postalCode"),
+      },
+      billing: {
+        dni: formData.get("dni"),
+        useShippingAddress: useShippingAsBilling,
+        ...(useShippingAsBilling
+          ? {}
+          : {
+              address: formData.get("billingAddress"),
+              city: formData.get("billingCity"),
+              province: formData.get("billingProvince"),
+              postalCode: formData.get("billingPostalCode"),
+            }),
+        isBusinessPurchase,
+        ...(isBusinessPurchase
+          ? {
+              cuit: formData.get("cuit"),
+              businessName: formData.get("businessName"),
+            }
+          : {}),
+      },
+    };
+
+    let response: Response;
+
+    try {
+      response = await fetch("/api/checkout/create-preference", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      setErrorMessage(
+        "No pudimos conectar con el servidor. Probá de nuevo en unos segundos.",
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    const data = (await response.json().catch(() => ({}))) as {
+      initPoint?: string;
+      message?: string;
+    };
+
+    if (!response.ok || !data.initPoint) {
+      // Respuesta definitiva (validación/negocio): el próximo intento es un
+      // pedido lógicamente distinto, así que renovamos la idempotency key.
+      setIdempotencyKey(crypto.randomUUID());
+      setErrorMessage(data.message ?? "No pudimos iniciar el pago.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    window.location.href = data.initPoint;
   }
 
   return (
@@ -213,61 +288,120 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
             <fieldset className="checkout-section">
               <legend>
                 <span>04</span>
-                Medio de pago
+                Facturación
               </legend>
-              <div className="checkout-options checkout-options--payment">
-                <label
-                  className={`checkout-option ${
-                    payment === "card" ? "is-selected" : ""
-                  }`}
-                >
+              <div className="checkout-fields checkout-fields--two">
+                <label>
+                  DNI
                   <input
-                    checked={payment === "card"}
-                    name="payment"
-                    onChange={() => setPayment("card")}
-                    type="radio"
-                    value="card"
+                    inputMode="numeric"
+                    name="dni"
+                    pattern="\d{7,8}"
+                    placeholder="30123456"
+                    required
+                    title="DNI sin puntos, 7 u 8 dígitos"
                   />
-                  <span className="checkout-option__icon">
-                    <CardIcon />
-                  </span>
-                  <span>
-                    <strong>Tarjeta</strong>
-                    <small>Crédito o débito</small>
-                  </span>
-                </label>
-                <label
-                  className={`checkout-option ${
-                    payment === "transfer" ? "is-selected" : ""
-                  }`}
-                >
-                  <input
-                    checked={payment === "transfer"}
-                    name="payment"
-                    onChange={() => setPayment("transfer")}
-                    type="radio"
-                    value="transfer"
-                  />
-                  <span className="checkout-option__icon">
-                    <TransferIcon />
-                  </span>
-                  <span>
-                    <strong>Transferencia</strong>
-                    <small>Datos al confirmar</small>
-                  </span>
                 </label>
               </div>
+              <label className="checkout-checkbox">
+                <input
+                  checked={useShippingAsBilling}
+                  onChange={(event) =>
+                    setUseShippingAsBilling(event.target.checked)
+                  }
+                  type="checkbox"
+                />
+                Usar los mismos datos que el envío
+              </label>
+              {!useShippingAsBilling && (
+                <>
+                  <div className="checkout-fields">
+                    <label>
+                      Calle y número
+                      <input
+                        name="billingAddress"
+                        placeholder="Av. ejemplo 1234"
+                        required
+                      />
+                    </label>
+                  </div>
+                  <div className="checkout-fields checkout-fields--address">
+                    <label>
+                      Ciudad
+                      <input name="billingCity" placeholder="Buenos Aires" required />
+                    </label>
+                    <label>
+                      Provincia
+                      <input
+                        name="billingProvince"
+                        placeholder="Buenos Aires"
+                        required
+                      />
+                    </label>
+                    <label>
+                      Código postal
+                      <input name="billingPostalCode" placeholder="C1000" required />
+                    </label>
+                  </div>
+                </>
+              )}
+              <label className="checkout-checkbox">
+                <input
+                  checked={isBusinessPurchase}
+                  onChange={(event) =>
+                    setIsBusinessPurchase(event.target.checked)
+                  }
+                  type="checkbox"
+                />
+                Comprar como empresa (factura A con CUIT)
+              </label>
+              {isBusinessPurchase && (
+                <div className="checkout-fields checkout-fields--two">
+                  <label>
+                    CUIT
+                    <input
+                      inputMode="numeric"
+                      name="cuit"
+                      placeholder="30-12345678-9"
+                      required
+                    />
+                  </label>
+                  <label>
+                    Razón social
+                    <input
+                      name="businessName"
+                      placeholder="Tu empresa S.A."
+                      required
+                    />
+                  </label>
+                </div>
+              )}
             </fieldset>
 
-            <button className="checkout-submit" type="submit">
-              Continuar al pago
+            <fieldset className="checkout-section">
+              <legend>
+                <span>05</span>
+                Medio de pago
+              </legend>
+              <p className="checkout-payment-note">
+                <CardIcon />
+                En el siguiente paso vas a elegir cómo pagar (tarjeta,
+                efectivo o transferencia) de forma segura con Mercado Pago.
+              </p>
+            </fieldset>
+
+            <button
+              className="checkout-submit"
+              disabled={isSubmitting}
+              type="submit"
+            >
+              {isSubmitting ? "Redirigiendo a Mercado Pago…" : "Continuar al pago"}
               <ArrowRightIcon />
             </button>
 
-            {submitted && (
-              <p className="checkout-notice" role="status">
-                La interfaz está lista. El próximo paso es conectar este botón
-                con tu API de órdenes y pagos en NestJS.
+            {errorMessage && (
+              <p className="checkout-notice checkout-notice--error" role="alert">
+                {errorMessage}
               </p>
             )}
           </form>
@@ -300,16 +434,13 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
                     <strong>
                       {formatCurrency(product.price, product.currency)}
                     </strong>
-                    {minimumQuantity > 1 && <small>por unidad</small>}
                   </div>
                   <div className="quantity" aria-label="Cantidad">
                     <button
                       aria-label="Quitar una unidad"
-                      disabled={quantity === minimumQuantity}
+                      disabled={quantity === 1}
                       onClick={() =>
-                        setQuantity((current) =>
-                          Math.max(minimumQuantity, current - 1),
-                        )
+                        setQuantity((current) => Math.max(1, current - 1))
                       }
                       type="button"
                     >
@@ -325,11 +456,6 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
                     </button>
                   </div>
                 </div>
-                {minimumQuantity > 1 && (
-                  <p className="checkout-product__minimum">
-                    Compra mínima: {minimumQuantity} tarjetas.
-                  </p>
-                )}
               </div>
             </div>
 
@@ -453,20 +579,6 @@ function CardIcon() {
       <path
         d="M3 6h18v12H3V6Zm0 4h18M7 15h4"
         stroke="currentColor"
-        strokeWidth="1.5"
-      />
-    </Icon>
-  );
-}
-
-function TransferIcon() {
-  return (
-    <Icon>
-      <path
-        d="M4 8h14m-3-3 3 3-3 3M20 16H6m3 3-3-3 3-3"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
         strokeWidth="1.5"
       />
     </Icon>
