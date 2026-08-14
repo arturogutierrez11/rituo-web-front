@@ -5,7 +5,7 @@ import { Fragment, useState } from "react";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
-import type { Order } from "@/types/order";
+import type { Order, ShippingStatusValue } from "@/types/order";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -19,10 +19,32 @@ const STATUS_LABELS: Record<Order["status"], string> = {
   payment_init_failed: "Falló al iniciar pago",
 };
 
+const SHIPPING_STATUS_LABELS: Record<ShippingStatusValue, string> = {
+  pending_dispatch: "Por despachar",
+  dispatched: "Despachada",
+  shipped: "Enviada",
+  cancelled: "Cancelada",
+};
+
+const SHIPPING_STATUS_OPTIONS: ShippingStatusValue[] = [
+  "pending_dispatch",
+  "dispatched",
+  "shipped",
+  "cancelled",
+];
+
 function StatusBadge({ status }: { status: Order["status"] }) {
   return (
     <span className={`order-status-badge order-status-badge--${status}`}>
       {STATUS_LABELS[status] ?? status}
+    </span>
+  );
+}
+
+function ShippingStatusBadge({ status }: { status: ShippingStatusValue }) {
+  return (
+    <span className={`shipping-status-badge shipping-status-badge--${status}`}>
+      {SHIPPING_STATUS_LABELS[status] ?? status}
     </span>
   );
 }
@@ -33,6 +55,9 @@ export function OrdersTable({ orders }: OrdersTableProps) {
   const [shipFormId, setShipFormId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [errorByOrder, setErrorByOrder] = useState<Record<string, string>>({});
+  const [pendingShippingStatus, setPendingShippingStatus] = useState<
+    Record<string, ShippingStatusValue>
+  >({});
 
   if (orders.length === 0) {
     return (
@@ -45,7 +70,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
 
   async function runAction(
     orderId: string,
-    action: "cancel" | "ship" | "resync",
+    action: "cancel" | "ship" | "resync" | "shipping-status" | "invoice-status",
     body?: unknown,
   ) {
     setLoadingId(orderId);
@@ -94,7 +119,8 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             <th>Cliente</th>
             <th>Producto</th>
             <th>Total</th>
-            <th>Estado</th>
+            <th>Pago</th>
+            <th>Envío</th>
             <th>Fecha</th>
           </tr>
         </thead>
@@ -103,6 +129,9 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             const isExpanded = expandedId === order.id;
             const isLoading = loadingId === order.id;
             const error = errorByOrder[order.id];
+            const selectedShippingStatus =
+              pendingShippingStatus[order.id] ?? order.shippingStatus;
+            const isInvoiced = order.invoiceStatus === "invoiced";
 
             return (
               <Fragment key={order.id}>
@@ -134,9 +163,10 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                   <td>{formatCurrency(order.total, order.currency)}</td>
                   <td>
                     <StatusBadge status={order.status} />
-                    {order.shippedAt && (
-                      <span className="order-shipped-tag">Enviada</span>
-                    )}
+                    {isInvoiced && <span className="order-invoiced-tag">Facturada</span>}
+                  </td>
+                  <td>
+                    <ShippingStatusBadge status={order.shippingStatus} />
                   </td>
                   <td>
                     <div className="admin-date">
@@ -146,7 +176,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                 </tr>
                 {isExpanded && (
                   <tr className="order-detail-row">
-                    <td colSpan={6}>
+                    <td colSpan={7}>
                       <div className="order-detail">
                         <div className="order-detail__grid">
                           <div>
@@ -182,7 +212,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                             <p>Estado MP: {order.mpPaymentStatus ?? "—"}</p>
                           </div>
                           <div>
-                            <span>Envío físico</span>
+                            <span>Detalle de envío</span>
                             {order.shippedAt ? (
                               <>
                                 <p>Enviada el {formatDateTime(order.shippedAt)}</p>
@@ -194,8 +224,74 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                                 </p>
                               </>
                             ) : (
-                              <p>Todavía no se marcó como enviada.</p>
+                              <p>Todavía no se despachó.</p>
                             )}
+                          </div>
+                        </div>
+
+                        <div className="order-detail__controls">
+                          <div className="order-status-control">
+                            <span>Estado de envío</span>
+                            <div className="order-status-control__row">
+                              <select
+                                value={selectedShippingStatus}
+                                onChange={(event) => {
+                                  const value = event.target.value as ShippingStatusValue;
+                                  setPendingShippingStatus((prev) => ({
+                                    ...prev,
+                                    [order.id]: value,
+                                  }));
+                                  setShipFormId(value === "shipped" ? order.id : null);
+                                }}
+                              >
+                                {SHIPPING_STATUS_OPTIONS.map((option) => (
+                                  <option key={option} value={option}>
+                                    {SHIPPING_STATUS_LABELS[option]}
+                                  </option>
+                                ))}
+                              </select>
+                              {selectedShippingStatus !== order.shippingStatus &&
+                                selectedShippingStatus !== "shipped" && (
+                                  <button
+                                    className="admin-refresh"
+                                    disabled={isLoading}
+                                    onClick={() =>
+                                      runAction(order.id, "shipping-status", {
+                                        status: selectedShippingStatus,
+                                      })
+                                    }
+                                    type="button"
+                                  >
+                                    Guardar estado
+                                  </button>
+                                )}
+                            </div>
+                          </div>
+
+                          <div className="order-status-control">
+                            <span>Facturación</span>
+                            <div className="order-status-control__row">
+                              <span
+                                className={`invoice-status-badge${isInvoiced ? " is-invoiced" : ""}`}
+                              >
+                                {isInvoiced ? "Facturada" : "No facturada"}
+                                {isInvoiced && order.invoicedAt
+                                  ? ` · ${formatDateTime(order.invoicedAt)}`
+                                  : ""}
+                              </span>
+                              <button
+                                className="admin-refresh"
+                                disabled={isLoading}
+                                onClick={() =>
+                                  runAction(order.id, "invoice-status", {
+                                    invoiced: !isInvoiced,
+                                  })
+                                }
+                                type="button"
+                              >
+                                {isInvoiced ? "Marcar no facturada" : "Marcar facturada"}
+                              </button>
+                            </div>
                           </div>
                         </div>
 
@@ -234,20 +330,6 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                               type="button"
                             >
                               Cancelar orden
-                            </button>
-                          )}
-                          {order.status === "approved" && !order.shippedAt && (
-                            <button
-                              className="order-action"
-                              disabled={isLoading}
-                              onClick={() =>
-                                setShipFormId((current) =>
-                                  current === order.id ? null : order.id,
-                                )
-                              }
-                              type="button"
-                            >
-                              Marcar enviada
                             </button>
                           )}
                           <button

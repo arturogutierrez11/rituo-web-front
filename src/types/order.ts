@@ -5,6 +5,12 @@ export type OrderStatusValue =
   | "cancelled"
   | "payment_init_failed";
 
+export type ShippingStatusValue =
+  | "pending_dispatch"
+  | "dispatched"
+  | "shipped"
+  | "cancelled";
+
 export interface Order {
   id: string;
 
@@ -46,10 +52,14 @@ export interface Order {
   mpPaymentStatus: string | null;
   mpPaymentStatusDetail: string | null;
 
+  shippingStatus: ShippingStatusValue;
   shippingCarrier: string | null;
   shippingTrackingNumber: string | null;
   shippingLabelUrl: string | null;
   shippedAt: string | null;
+
+  invoiceStatus: string | null;
+  invoicedAt: string | null;
 
   approvedAt: string | null;
   emailSentAt: string | null;

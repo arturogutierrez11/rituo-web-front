@@ -2,7 +2,12 @@ import "server-only";
 
 import type { ProductCommerce } from "@/types/product";
 import type { CheckoutRequestPayload } from "@/types/checkout";
-import type { MarkOrderShippedPayload, Order, OrderStatusValue } from "@/types/order";
+import type {
+  MarkOrderShippedPayload,
+  Order,
+  OrderStatusValue,
+  ShippingStatusValue,
+} from "@/types/order";
 
 const DEFAULT_CHECKOUT_API_URL = "http://localhost:3001";
 
@@ -123,7 +128,7 @@ export async function listOrders(status?: OrderStatusValue): Promise<Order[]> {
 
 async function postOrderAction(
   orderId: string,
-  action: "cancel" | "ship" | "resync",
+  action: "cancel" | "ship" | "resync" | "shipping-status" | "invoice-status",
   body?: unknown,
 ): Promise<Order> {
   const response = await fetch(buildCheckoutUrl(`/orders/${orderId}/${action}`), {
@@ -163,4 +168,18 @@ export function markOrderShipped(
 
 export function resyncOrder(orderId: string): Promise<Order> {
   return postOrderAction(orderId, "resync");
+}
+
+export function setShippingStatus(
+  orderId: string,
+  status: ShippingStatusValue,
+): Promise<Order> {
+  return postOrderAction(orderId, "shipping-status", { status });
+}
+
+export function setInvoiceStatus(
+  orderId: string,
+  invoiced: boolean,
+): Promise<Order> {
+  return postOrderAction(orderId, "invoice-status", { invoiced });
 }
