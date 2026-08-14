@@ -19,6 +19,15 @@ const MOVEMENT_LABELS: Record<InventoryMovement["movementType"], string> = {
   restock: "Ingreso de mercadería",
 };
 
+const TABS = [
+  { key: "stock", label: "Stock" },
+  { key: "restock", label: "Ingresar mercadería" },
+  { key: "gift", label: "Regalo / donación" },
+  { key: "movements", label: "Movimientos" },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
+
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -30,6 +39,7 @@ function productLabel(products: ProductStock[], productId: string) {
 
 export function InventoryPanel({ products, movements }: InventoryPanelProps) {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabKey>("stock");
   const [restockForm, setRestockForm] = useState({
     sku: products[0]?.sku ?? "",
     quantity: "1",
@@ -37,7 +47,7 @@ export function InventoryPanel({ products, movements }: InventoryPanelProps) {
     occurredAt: todayInputValue(),
   });
   const [giftForm, setGiftForm] = useState({
-    sku: products.find((product) => !product.isInternal)?.sku ?? products[0]?.sku ?? "",
+    sku: products[0]?.sku ?? "",
     quantity: "1",
     note: "",
     occurredAt: todayInputValue(),
@@ -109,46 +119,69 @@ export function InventoryPanel({ products, movements }: InventoryPanelProps) {
 
   return (
     <>
-      <section className="admin-card">
-        <div className="admin-card__head">
-          <div>
-            <span>Stock</span>
-            <h2>Stock por SKU</h2>
+      <div className="admin-tabs" role="tablist" aria-label="Secciones de inventario">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            className={`admin-tab${activeTab === tab.key ? " is-active" : ""}`}
+            onClick={() => setActiveTab(tab.key)}
+            role="tab"
+            aria-selected={activeTab === tab.key}
+            type="button"
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {error && (
+        <p className="order-detail__error" role="alert">
+          {error}
+        </p>
+      )}
+
+      {activeTab === "stock" && (
+        <section className="admin-card">
+          <div className="admin-card__head">
+            <div>
+              <span>Stock</span>
+              <h2>Stock por SKU</h2>
+            </div>
+            <p>{products.length} SKUs</p>
           </div>
-          <p>{products.length} SKUs</p>
-        </div>
 
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>SKU</th>
-                <th>Producto</th>
-                <th>Stock</th>
-                <th>Tipo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id}>
-                  <td>
-                    <strong>{product.sku}</strong>
-                  </td>
-                  <td>{product.name}</td>
-                  <td>
-                    <span className={`inventory-stock${product.stock === 0 ? " is-empty" : ""}`}>
-                      {product.stock}
-                    </span>
-                  </td>
-                  <td>{product.isInternal ? "Interno (packaging)" : "Venta al público"}</td>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Producto</th>
+                  <th>Stock</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {products.map((product) => (
+                  <tr key={product.id}>
+                    <td>
+                      <strong>{product.sku}</strong>
+                    </td>
+                    <td>{product.name}</td>
+                    <td>
+                      <span
+                        className={`inventory-stock${product.stock === 0 ? " is-empty" : ""}`}
+                      >
+                        {product.stock}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
-      <div className="inventory-forms">
+      {activeTab === "restock" && (
         <section className="admin-card">
           <div className="admin-card__head">
             <div>
@@ -210,7 +243,9 @@ export function InventoryPanel({ products, movements }: InventoryPanelProps) {
             </button>
           </form>
         </section>
+      )}
 
+      {activeTab === "gift" && (
         <section className="admin-card">
           <div className="admin-card__head">
             <div>
@@ -273,57 +308,60 @@ export function InventoryPanel({ products, movements }: InventoryPanelProps) {
             </button>
           </form>
         </section>
-      </div>
-
-      {error && (
-        <p className="order-detail__error" role="alert">
-          {error}
-        </p>
       )}
 
-      <section className="admin-card">
-        <div className="admin-card__head">
-          <div>
-            <span>Trazabilidad</span>
-            <h2>Últimos movimientos</h2>
+      {activeTab === "movements" && (
+        <section className="admin-card">
+          <div className="admin-card__head">
+            <div>
+              <span>Trazabilidad</span>
+              <h2>Últimos movimientos</h2>
+            </div>
+            <p>{movements.length} resultados</p>
           </div>
-          <p>{movements.length} resultados</p>
-        </div>
 
-        {movements.length === 0 ? (
-          <div className="admin-empty">
-            <strong>Todavía no hay movimientos.</strong>
-            <p>Cuando se venda, cancele, regale o ingrese stock, va a aparecer acá.</p>
-          </div>
-        ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>SKU</th>
-                  <th>Tipo</th>
-                  <th>Cantidad</th>
-                  <th>Stock resultante</th>
-                  <th>Nota</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movements.map((movement) => (
-                  <tr key={movement.id}>
-                    <td>{formatDateTime(movement.occurredAt)}</td>
-                    <td>{productLabel(products, movement.productId)}</td>
-                    <td>{MOVEMENT_LABELS[movement.movementType] ?? movement.movementType}</td>
-                    <td>{movement.quantityDelta > 0 ? `+${movement.quantityDelta}` : movement.quantityDelta}</td>
-                    <td>{movement.stockAfter}</td>
-                    <td>{movement.note ?? (movement.orderId ? `Orden ${movement.orderId.slice(0, 8)}` : "—")}</td>
+          {movements.length === 0 ? (
+            <div className="admin-empty">
+              <strong>Todavía no hay movimientos.</strong>
+              <p>Cuando se venda, cancele, regale o ingrese stock, va a aparecer acá.</p>
+            </div>
+          ) : (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>SKU</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Stock resultante</th>
+                    <th>Nota</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                </thead>
+                <tbody>
+                  {movements.map((movement) => (
+                    <tr key={movement.id}>
+                      <td>{formatDateTime(movement.occurredAt)}</td>
+                      <td>{productLabel(products, movement.productId)}</td>
+                      <td>{MOVEMENT_LABELS[movement.movementType] ?? movement.movementType}</td>
+                      <td>
+                        {movement.quantityDelta > 0
+                          ? `+${movement.quantityDelta}`
+                          : movement.quantityDelta}
+                      </td>
+                      <td>{movement.stockAfter}</td>
+                      <td>
+                        {movement.note ??
+                          (movement.orderId ? `Orden ${movement.orderId.slice(0, 8)}` : "—")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
     </>
   );
 }
