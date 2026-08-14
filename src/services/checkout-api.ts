@@ -2,6 +2,7 @@ import "server-only";
 
 import type { ProductCommerce } from "@/types/product";
 import type { CheckoutRequestPayload } from "@/types/checkout";
+import type { MarkOrderShippedPayload, Order, OrderStatusValue } from "@/types/order";
 
 const DEFAULT_CHECKOUT_API_URL = "http://localhost:3001";
 
@@ -79,17 +80,7 @@ export async function createOrder(
   return data as CreateOrderResult;
 }
 
-export interface OrderStatus {
-  id: string;
-  status: string;
-  productName: string;
-  total: number;
-  currency: string;
-  mpPaymentId: string | null;
-  mpPaymentStatus: string | null;
-}
-
-export async function getOrder(orderId: string): Promise<OrderStatus | null> {
+export async function getOrder(orderId: string): Promise<Order | null> {
   const response = await fetch(buildCheckoutUrl(`/orders/${orderId}`), {
     headers: {
       Accept: "application/json",
@@ -108,5 +99,68 @@ export async function getOrder(orderId: string): Promise<OrderStatus | null> {
     throw new Error(`No pudimos consultar la orden (${response.status})`);
   }
 
-  return data as OrderStatus;
+  return data as Order;
+}
+
+export async function listOrders(status?: OrderStatusValue): Promise<Order[]> {
+  const query = status ? `?status=${status}&limit=200` : "?limit=200";
+  const response = await fetch(buildCheckoutUrl(`/orders${query}`), {
+    headers: {
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(`No pudimos cargar las órdenes (${response.status})`);
+  }
+
+  return data as Order[];
+}
+
+async function postOrderAction(
+  orderId: string,
+  action: "cancel" | "ship" | "resync",
+  body?: unknown,
+): Promise<Order> {
+  const response = await fetch(buildCheckoutUrl(`/orders/${orderId}/${action}`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    const message =
+      data && typeof data === "object" && "message" in data
+        ? String((data as { message: unknown }).message)
+        : `No pudimos completar la acción (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data as Order;
+}
+
+export function cancelOrder(orderId: string): Promise<Order> {
+  return postOrderAction(orderId, "cancel");
+}
+
+export function markOrderShipped(
+  orderId: string,
+  payload: MarkOrderShippedPayload,
+): Promise<Order> {
+  return postOrderAction(orderId, "ship", payload);
+}
+
+export function resyncOrder(orderId: string): Promise<Order> {
+  return postOrderAction(orderId, "resync");
 }
