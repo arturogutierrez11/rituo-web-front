@@ -8,6 +8,12 @@ import type {
   OrderStatusValue,
   ShippingStatusValue,
 } from "@/types/order";
+import type {
+  InventoryMovement,
+  ProductStock,
+  RecordGiftPayload,
+  RestockPayload,
+} from "@/types/inventory";
 
 const DEFAULT_CHECKOUT_API_URL = "http://localhost:3001";
 
@@ -128,7 +134,13 @@ export async function listOrders(status?: OrderStatusValue): Promise<Order[]> {
 
 async function postOrderAction(
   orderId: string,
-  action: "cancel" | "ship" | "resync" | "shipping-status" | "invoice-status",
+  action:
+    | "cancel"
+    | "ship"
+    | "resync"
+    | "shipping-status"
+    | "invoice-status"
+    | "return",
   body?: unknown,
 ): Promise<Order> {
   const response = await fetch(buildCheckoutUrl(`/orders/${orderId}/${action}`), {
@@ -182,4 +194,83 @@ export function setInvoiceStatus(
   invoiced: boolean,
 ): Promise<Order> {
   return postOrderAction(orderId, "invoice-status", { invoiced });
+}
+
+export function returnOrder(orderId: string, note?: string): Promise<Order> {
+  return postOrderAction(orderId, "return", note ? { note } : undefined);
+}
+
+export async function listInventoryProducts(): Promise<ProductStock[]> {
+  const response = await fetch(buildCheckoutUrl("/inventory/products"), {
+    headers: {
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(`No pudimos cargar el inventario (${response.status})`);
+  }
+
+  return data as ProductStock[];
+}
+
+export async function listInventoryMovements(
+  productId?: string,
+): Promise<InventoryMovement[]> {
+  const query = productId ? `?productId=${productId}&limit=100` : "?limit=100";
+  const response = await fetch(buildCheckoutUrl(`/inventory/movements${query}`), {
+    headers: {
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(`No pudimos cargar los movimientos (${response.status})`);
+  }
+
+  return data as InventoryMovement[];
+}
+
+async function postInventoryAction(
+  path: "restock" | "gifts",
+  body: unknown,
+): Promise<InventoryMovement> {
+  const response = await fetch(buildCheckoutUrl(`/inventory/${path}`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    const message =
+      data && typeof data === "object" && "message" in data
+        ? String((data as { message: unknown }).message)
+        : `No pudimos completar la acción (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data as InventoryMovement;
+}
+
+export function restockProduct(payload: RestockPayload): Promise<InventoryMovement> {
+  return postInventoryAction("restock", payload);
+}
+
+export function recordGift(payload: RecordGiftPayload): Promise<InventoryMovement> {
+  return postInventoryAction("gifts", payload);
 }

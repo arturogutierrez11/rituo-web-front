@@ -70,7 +70,13 @@ export function OrdersTable({ orders }: OrdersTableProps) {
 
   async function runAction(
     orderId: string,
-    action: "cancel" | "ship" | "resync" | "shipping-status" | "invoice-status",
+    action:
+      | "cancel"
+      | "ship"
+      | "resync"
+      | "shipping-status"
+      | "invoice-status"
+      | "return",
     body?: unknown,
   ) {
     setLoadingId(orderId);
@@ -340,6 +346,16 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                           >
                             {isLoading ? "Verificando…" : "Verificar pago con MP"}
                           </button>
+                          {order.status === "approved" && (
+                            <button
+                              className="order-action"
+                              disabled={isLoading}
+                              onClick={() => runAction(order.id, "return")}
+                              type="button"
+                            >
+                              Registrar devolución
+                            </button>
+                          )}
                         </div>
                       </div>
                     </td>

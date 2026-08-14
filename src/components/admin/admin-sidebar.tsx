@@ -11,6 +11,12 @@ const sections = [
     shortLabel: "OR",
   },
   {
+    href: "/rituo-admin/inventory",
+    label: "Inventario",
+    description: "Stock y trazabilidad",
+    shortLabel: "IN",
+  },
+  {
     href: "/rituo-admin/panel",
     label: "Lista de espera",
     description: "Leads de preventa",

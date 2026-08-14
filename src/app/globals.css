@@ -3210,6 +3210,55 @@ main { position: relative; z-index: 1; }
   font-size: 0.78rem;
 }
 
+.inventory-forms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.inventory-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.inventory-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 140px;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.inventory-form__note {
+  flex: 1 1 100%;
+}
+
+.inventory-form select,
+.inventory-form input {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: rgba(8, 16, 38, 0.65);
+  color: var(--ink);
+  font-size: 0.80rem;
+}
+
+.inventory-form button {
+  flex: 0 0 auto;
+}
+
+.inventory-stock {
+  font-weight: 600;
+}
+
+.inventory-stock.is-empty {
+  color: #f0a8a8;
+}
+
 .legal-admin-grid {
   display: grid;
   grid-template-columns: minmax(360px, 0.82fr) minmax(440px, 1.18fr);
