@@ -1,6 +1,10 @@
-import Image from "next/image";
-
 import { StoreButtons } from "@/components/ui/store-buttons";
+
+const features = [
+  "Rituales por apps y horarios",
+  "Estadísticas de tu foco",
+  "Desbloqueo físico con tu Tag",
+];
 
 export function DownloadHero() {
   return (
@@ -15,25 +19,17 @@ export function DownloadHero() {
         Tag y volvé al presente, todos los días.
       </p>
 
+      <ul className="download-hero__features">
+        {features.map((feature) => (
+          <li key={feature}>{feature}</li>
+        ))}
+      </ul>
+
       <StoreButtons />
 
       <p className="download-hero__note">
         Ya disponible para iPhone. La versión para Android está en camino.
       </p>
-
-      <div className="download-hero__visual" aria-hidden="true">
-        <div className="download-hero__glow" />
-        <div className="download-hero__phone">
-          <Image
-            src="/images/rituo-app-screen.png"
-            alt=""
-            width={477}
-            height={865}
-            sizes="(max-width: 800px) 70vw, 300px"
-            priority
-          />
-        </div>
-      </div>
     </section>
   );
 }

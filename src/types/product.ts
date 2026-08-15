@@ -9,6 +9,9 @@ export interface ProductMarketing {
   label: string;
   description: string;
   ctaLabel?: string;
+  badge?: string;
+  /** How many physical cards this SKU bundles (1, 2, 10). Drives the "×N" pack badge. */
+  packSize: number;
   features?: string[];
 }
 
