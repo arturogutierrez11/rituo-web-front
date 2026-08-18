@@ -191,11 +191,11 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                               {order.shippingAddress}, {order.shippingCity},{" "}
                               {order.shippingProvince} ({order.shippingPostalCode})
                             </p>
-                            <p>
+                            {/* <p>
                               {order.shippingMethod === "express"
                                 ? "Envío express"
                                 : "Envío estándar"}
-                            </p>
+                            </p> */}
                           </div>
                           <div>
                             <span>Facturación</span>

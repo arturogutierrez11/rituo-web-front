@@ -1,57 +1,44 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-function requestAdminAuth() {
-  return new Response("Autenticación requerida", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="Rituo Admin", charset="UTF-8"',
-    },
-  });
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session";
+
+const PUBLIC_ADMIN_PATHS = [
+  "/rituo-admin/login",
+  "/api/admin/auth/login",
+  "/api/admin/auth/logout",
+];
+
+function isPublicAdminPath(pathname: string): boolean {
+  return PUBLIC_ADMIN_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
 }
 
-function isValidAdminSession(request: NextRequest) {
-  const adminUser = process.env.RITUO_ADMIN_USER;
-  const adminPassword = process.env.RITUO_ADMIN_PASSWORD;
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-  if (!adminUser || !adminPassword) {
-    return process.env.NODE_ENV !== "production";
+  if (isPublicAdminPath(pathname)) {
+    return NextResponse.next();
   }
 
-  const authorization = request.headers.get("authorization");
+  const session = await verifyAdminSessionToken(
+    request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
+  );
 
-  if (!authorization) {
-    return false;
+  if (session) {
+    return NextResponse.next();
   }
 
-  const [scheme, encodedCredentials] = authorization.split(" ");
-
-  if (scheme !== "Basic" || !encodedCredentials) {
-    return false;
+  if (pathname.startsWith("/api/admin")) {
+    return NextResponse.json(
+      { message: "Autenticación requerida." },
+      { status: 401 },
+    );
   }
 
-  try {
-    const decodedCredentials = atob(encodedCredentials);
-    const separatorIndex = decodedCredentials.indexOf(":");
-
-    if (separatorIndex < 0) {
-      return false;
-    }
-
-    const username = decodedCredentials.slice(0, separatorIndex);
-    const password = decodedCredentials.slice(separatorIndex + 1);
-
-    return username === adminUser && password === adminPassword;
-  } catch {
-    return false;
-  }
-}
-
-export function proxy(request: NextRequest) {
-  if (!isValidAdminSession(request)) {
-    return requestAdminAuth();
-  }
-
-  return NextResponse.next();
+  const loginUrl = new URL("/rituo-admin/login", request.url);
+  loginUrl.searchParams.set("next", pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const LINK_STYLE: React.CSSProperties = {
   fontFamily: "var(--font-sans)",
   fontSize: 15,
@@ -58,17 +60,15 @@ export function RtFooter() {
             <div style={COLUMN_HEAD_STYLE}>Producto</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <a href="#como-funciona" style={LINK_STYLE}>Cómo funciona</a>
-              <a href="#" style={LINK_STYLE}>Compatibilidad</a>
-              <a href="#" style={LINK_STYLE}>Modos</a>
-              <a href="#" style={LINK_STYLE}>Rituales</a>
+              <Link href="/download" style={LINK_STYLE}>Descargar app</Link>
             </div>
           </div>
 
           <div>
             <div style={COLUMN_HEAD_STYLE}>Soporte</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <Link href="/soporte" style={LINK_STYLE}>Centro de ayuda</Link>
               <a href="#faq" style={LINK_STYLE}>Preguntas frecuentes</a>
-              <a href="#" style={LINK_STYLE}>Envíos</a>
               <a href="mailto:hello@rituo.io" style={LINK_STYLE}>hello@rituo.io</a>
             </div>
           </div>
@@ -76,9 +76,9 @@ export function RtFooter() {
           <div>
             <div style={COLUMN_HEAD_STYLE}>Rituo</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <a href="#" style={LINK_STYLE}>Instagram</a>
-              <a href="#" style={LINK_STYLE}>Términos</a>
-              <a href="#" style={LINK_STYLE}>Privacidad</a>
+              <Link href="/redes" style={LINK_STYLE}>Redes</Link>
+              <Link href="/legal/terminos-y-condiciones" style={LINK_STYLE}>Términos y condiciones</Link>
+              <Link href="/legal/politica-de-privacidad" style={LINK_STYLE}>Privacidad</Link>
             </div>
           </div>
         </div>

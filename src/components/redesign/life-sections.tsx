@@ -3,11 +3,11 @@ import Image from "next/image";
 import { RtReveal } from "./rt-reveal";
 
 const LIFE_LINES = [
-  { line: "Trabajar sin interrumpirte.", image: "/images/redesign/life-trabajar.jpg" },
-  { line: "Leer sin tener que resistirte.", image: null },
+  { line: "Trabajar sin interrumpirte.", image: "/images/redesign/life-trabajar-02.jpg" },
+  { line: "Leer sin tener que resistirte.", image: "/images/redesign/life-travel.jpg"},
   { line: "Estar con amigos sin estar en otro lado.", image: "/images/redesign/life-amigos.jpg" },
-  { line: "Aburrirte un rato.", image: "/images/redesign/life-aburrir.jpg" },
-  { line: "Estar acá.", image: null },
+  { line: "Aburrirte un rato.", image: "/images/redesign/life-aburrir.jpg" }
+  //{ line: "Estar acá.", image: null },
 ];
 
 export function LifeSections() {

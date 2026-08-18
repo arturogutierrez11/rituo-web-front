@@ -72,95 +72,103 @@ export function ContactForm({
   }
 
   return (
-    <form className="contact-form" onSubmit={handleSubmit}>
-      <div className="contact-form__heading">
-        <span>{eyebrow}</span>
-        <h2>{title}</h2>
-        <p>{description}</p>
-      </div>
+    <div className="rsp-card">
+      <p className="rsp-card__eyebrow">{eyebrow}</p>
+      <h2>{title}</h2>
+      <p>{description}</p>
 
-      <div className="contact-form__fields contact-form__fields--two">
-        <label>
-          Nombre
+      <form onSubmit={handleSubmit}>
+        <div className="rsp-fields rsp-fields--two">
+          <div className="rsp-field">
+            <label htmlFor="contact-name">Nombre</label>
+            <input
+              autoComplete="name"
+              className="rsp-input"
+              id="contact-name"
+              maxLength={80}
+              name="name"
+              onChange={(event) => updateField("name", event.target.value)}
+              placeholder="Tu nombre"
+              required
+              value={form.name}
+            />
+          </div>
+          <div className="rsp-field">
+            <label htmlFor="contact-email">Email</label>
+            <input
+              autoComplete="email"
+              className="rsp-input"
+              id="contact-email"
+              maxLength={160}
+              name="email"
+              onChange={(event) => updateField("email", event.target.value)}
+              placeholder="nombre@email.com"
+              required
+              type="email"
+              value={form.email}
+            />
+          </div>
+        </div>
+
+        <div className="rsp-field" style={{ marginBottom: 24 }}>
+          <label htmlFor="contact-subject">Asunto</label>
           <input
-            autoComplete="name"
-            maxLength={80}
-            name="name"
-            onChange={(event) => updateField("name", event.target.value)}
-            placeholder="Tu nombre"
+            className="rsp-input"
+            id="contact-subject"
+            maxLength={120}
+            name="subject"
+            onChange={(event) => updateField("subject", event.target.value)}
+            placeholder={subjectPlaceholder}
             required
-            value={form.name}
+            value={form.subject}
+          />
+        </div>
+
+        <div className="rsp-field" style={{ marginBottom: 32 }}>
+          <label htmlFor="contact-message">Mensaje</label>
+          <textarea
+            className="rsp-textarea"
+            id="contact-message"
+            maxLength={3000}
+            name="message"
+            onChange={(event) => updateField("message", event.target.value)}
+            placeholder="Escribí tu consulta acá..."
+            required
+            rows={6}
+            value={form.message}
+          />
+        </div>
+
+        <label className="rsp-honeypot" aria-hidden="true">
+          Sitio web
+          <input
+            autoComplete="off"
+            name="website"
+            onChange={(event) => updateField("website", event.target.value)}
+            tabIndex={-1}
+            value={form.website}
           />
         </label>
-        <label>
-          Email
-          <input
-            autoComplete="email"
-            maxLength={160}
-            name="email"
-            onChange={(event) => updateField("email", event.target.value)}
-            placeholder="nombre@email.com"
-            required
-            type="email"
-            value={form.email}
-          />
-        </label>
-      </div>
 
-      <label>
-        Asunto
-        <input
-          maxLength={120}
-          name="subject"
-          onChange={(event) => updateField("subject", event.target.value)}
-          placeholder={subjectPlaceholder}
-          required
-          value={form.subject}
-        />
-      </label>
+        <div className="rsp-card__footer">
+          <span>{footerText}</span>
+          <button className="rsp-submit" disabled={status === "loading"} type="submit">
+            {status === "loading" ? "Enviando..." : "Enviar mensaje →"}
+          </button>
+        </div>
 
-      <label>
-        Mensaje
-        <textarea
-          maxLength={3000}
-          name="message"
-          onChange={(event) => updateField("message", event.target.value)}
-          placeholder="Escribí tu consulta acá..."
-          required
-          rows={6}
-          value={form.message}
-        />
-      </label>
+        {status === "success" && (
+          <p className="rsp-notice rsp-notice--success" role="status">
+            Mensaje enviado. Gracias por escribirnos; te responderemos pronto.
+          </p>
+        )}
 
-      <label className="contact-form__honeypot" aria-hidden="true">
-        Sitio web
-        <input
-          autoComplete="off"
-          name="website"
-          onChange={(event) => updateField("website", event.target.value)}
-          tabIndex={-1}
-          value={form.website}
-        />
-      </label>
-
-      <div className="contact-form__footer">
-        <p>{footerText}</p>
-        <button className="btn btn--primary" disabled={status === "loading"} type="submit">
-          {status === "loading" ? "Enviando..." : "Enviar mensaje →"}
-        </button>
-      </div>
-
-      {status === "success" && (
-        <p className="contact-form__notice contact-form__notice--success" role="status">
-          Mensaje enviado. Gracias por escribirnos; te responderemos pronto.
-        </p>
-      )}
-
-      {status === "error" && (
-        <p className="contact-form__notice contact-form__notice--error" role="alert">
-          {errorMessage}
-        </p>
-      )}
-    </form>
+        {status === "error" && (
+          <p className="rsp-notice rsp-notice--error" role="alert">
+            {errorMessage}
+          </p>
+        )}
+      </form>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const sections = [
   {
@@ -44,6 +44,13 @@ const sections = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await fetch("/api/admin/auth/logout", { method: "POST" });
+    router.replace("/rituo-admin/login");
+    router.refresh();
+  }
 
   return (
     <aside className="admin-sidebar" aria-label="Panel de administración">
@@ -81,6 +88,13 @@ export function AdminSidebar() {
       <div className="admin-sidebar__footer">
         <span>Acceso interno</span>
         <strong>Rituo Admin</strong>
+        <button
+          className="admin-sidebar__logout"
+          onClick={handleLogout}
+          type="button"
+        >
+          Cerrar sesión
+        </button>
       </div>
     </aside>
   );

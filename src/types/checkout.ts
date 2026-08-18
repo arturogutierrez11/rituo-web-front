@@ -1,4 +1,4 @@
-export type ShippingMethod = "standard" | "express";
+export type ShippingMethod = "standard" ;
 
 export interface CheckoutCustomer {
   firstName: string;
