@@ -34,7 +34,8 @@ export const productsMarketing: ProductMarketing[] = [
     variant: "one",
     label: "Para empezar",
     packSize: 1,
-    features: ["1 tag NFC", "Packaging premium"],
+    features: ["Tarjeta rituo NFC + acceso lifetime a app"],
+    checkoutName: "rituo one",
   },
   {
     slug: "tag-two",

@@ -397,7 +397,7 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
             <Image alt={product.imageAlt} fill sizes="(max-width: 980px) 100vw, 38vw" src={product.image} />
           </div>
 
-          <h3 className="co-summary__product">{product.name}</h3>
+          <h3 className="co-summary__product">{product.checkoutName ?? product.name}</h3>
           {product.features && (
             <ul className="co-summary__features">
               {product.features.map((feature) => (

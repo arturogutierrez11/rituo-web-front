@@ -13,6 +13,8 @@ export interface ProductMarketing {
   /** How many physical cards this SKU bundles (1, 2, 10). Drives the "×N" pack badge. */
   packSize: number;
   features?: string[];
+  /** Overrides the commerce `name` in the checkout summary only (e.g. "rituo one" vs "Rituo Tag One"). */
+  checkoutName?: string;
 }
 
 /** Datos comerciales: fuente de verdad es checkout.api. */
