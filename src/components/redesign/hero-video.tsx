@@ -13,11 +13,13 @@ export function HeroVideo() {
       <div className="rt-noise" />
       <div className="rt-fullbleed" style={{ position: "absolute", inset: 0 }}>
         <video
-          src="/videos/hero-intro.mp4"
+          src="/videos/hero-intro-v2.mp4"
+          poster="/images/redesign/hero-intro-poster.jpg"
           autoPlay
           loop
           muted
           playsInline
+          preload="auto"
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </div>
