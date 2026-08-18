@@ -29,7 +29,7 @@ export const productsMarketing: ProductMarketing[] = [
   {
     slug: "tag-one",
     description: "Tarjeta NFC + packaging premium + acceso a rituales de foco.",
-    image: "/images/rituo-one.png",
+    image: "/images/redesign/product-packaging.jpg",
     imageAlt: "Packaging abierto de Rituo Tag One",
     variant: "one",
     label: "Para empezar",
