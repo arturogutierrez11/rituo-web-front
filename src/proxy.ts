@@ -4,6 +4,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 
 const PUBLIC_ADMIN_PATHS = [
   "/rituo-admin/login",
+  "/rituo-admin/manifest.webmanifest",
   "/api/admin/auth/login",
   "/api/admin/auth/logout",
 ];

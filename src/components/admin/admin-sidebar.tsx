@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const sections = [
   {
@@ -48,9 +49,29 @@ const sections = [
   },
 ];
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(
+    null,
+  );
+
+  useEffect(() => {
+    function handleBeforeInstall(event: Event) {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    return () =>
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+  }, []);
 
   async function handleLogout() {
     await fetch("/api/admin/auth/logout", { method: "POST" });
@@ -58,50 +79,103 @@ export function AdminSidebar() {
     router.refresh();
   }
 
+  async function handleInstall() {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  }
+
   return (
-    <aside className="admin-sidebar" aria-label="Panel de administración">
-      <div>
-        <Link className="admin-brand" href="/" aria-label="Volver a Rituo">
-          <span className="admin-brand__word">rituo</span>
-          <span className="admin-brand__dot" />
-        </Link>
-
-        <div className="admin-sidebar__intro">
-          <span>Admin</span>
-          <strong>Panel de rituo</strong>
-          <p>Gestión interna de la plataforma, la app y sus contenidos.</p>
-        </div>
-      </div>
-
-      <nav className="admin-nav" aria-label="Secciones">
-        {sections.map((section) => (
-          <Link
-            className={`admin-nav__item${
-              pathname === section.href ? " is-active" : ""
-            }`}
-            href={section.href}
-            key={section.href}
-          >
-            <span className="admin-nav__icon">{section.shortLabel}</span>
-            <span>
-              <strong>{section.label}</strong>
-              <small>{section.description}</small>
-            </span>
-          </Link>
-        ))}
-      </nav>
-
-      <div className="admin-sidebar__footer">
-        <span>Acceso interno</span>
-        <strong>Rituo Admin</strong>
+    <>
+      <div className="admin-mobile-topbar">
         <button
-          className="admin-sidebar__logout"
-          onClick={handleLogout}
+          aria-label="Abrir menú"
+          className="admin-mobile-topbar__menu"
+          onClick={() => setIsOpen(true)}
           type="button"
         >
-          Cerrar sesión
+          <span />
+          <span />
+          <span />
         </button>
+        <span className="admin-mobile-topbar__brand">rituo</span>
       </div>
-    </aside>
+
+      {isOpen && (
+        <div
+          className="admin-sidebar-overlay"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`admin-sidebar${isOpen ? " is-open" : ""}`}
+        aria-label="Panel de administración"
+      >
+        <button
+          aria-label="Cerrar menú"
+          className="admin-sidebar__close"
+          onClick={() => setIsOpen(false)}
+          type="button"
+        >
+          ×
+        </button>
+
+        <div>
+          <Link className="admin-brand" href="/" aria-label="Volver a Rituo">
+            <span className="admin-brand__word">rituo</span>
+            <span className="admin-brand__dot" />
+          </Link>
+
+          <div className="admin-sidebar__intro">
+            <span>Admin</span>
+            <strong>Panel de rituo</strong>
+            <p>Gestión interna de la plataforma, la app y sus contenidos.</p>
+          </div>
+        </div>
+
+        <nav className="admin-nav" aria-label="Secciones">
+          {sections.map((section) => (
+            <Link
+              className={`admin-nav__item${
+                pathname === section.href ? " is-active" : ""
+              }`}
+              href={section.href}
+              key={section.href}
+              onClick={() => setIsOpen(false)}
+            >
+              <span className="admin-nav__icon">{section.shortLabel}</span>
+              <span>
+                <strong>{section.label}</strong>
+                <small>{section.description}</small>
+              </span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className="admin-sidebar__footer">
+          <span>Acceso interno</span>
+          <strong>Rituo Admin</strong>
+          {installPrompt && (
+            <button
+              className="admin-sidebar__install"
+              onClick={handleInstall}
+              type="button"
+            >
+              Instalar en el escritorio
+            </button>
+          )}
+          <button
+            className="admin-sidebar__logout"
+            onClick={handleLogout}
+            type="button"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
