@@ -57,6 +57,8 @@ export interface Order {
   shippingTrackingNumber: string | null;
   shippingLabelUrl: string | null;
   shippedAt: string | null;
+  shippingRealCost: number | null;
+  shippingZipnovaShipmentId: string | null;
 
   invoiceStatus: string | null;
   invoicedAt: string | null;

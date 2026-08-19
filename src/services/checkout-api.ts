@@ -140,7 +140,8 @@ async function postOrderAction(
     | "resync"
     | "shipping-status"
     | "invoice-status"
-    | "return",
+    | "return"
+    | "shipping-label",
   body?: unknown,
 ): Promise<Order> {
   const response = await fetch(buildCheckoutUrl(`/orders/${orderId}/${action}`), {
@@ -198,6 +199,39 @@ export function setInvoiceStatus(
 
 export function returnOrder(orderId: string, note?: string): Promise<Order> {
   return postOrderAction(orderId, "return", note ? { note } : undefined);
+}
+
+export function generateShippingLabel(orderId: string): Promise<Order> {
+  return postOrderAction(orderId, "shipping-label");
+}
+
+export async function downloadShippingLabel(
+  orderId: string,
+): Promise<{ buffer: ArrayBuffer; contentType: string }> {
+  const response = await fetch(
+    buildCheckoutUrl(`/orders/${orderId}/shipping-label`),
+    {
+      headers: {
+        Accept: "application/pdf",
+        "x-internal-api-key": getInternalApiKey(),
+      },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    const data = await parseJson(response).catch(() => undefined);
+    const message =
+      data && typeof data === "object" && "message" in data
+        ? String((data as { message: unknown }).message)
+        : `No pudimos descargar la etiqueta (${response.status})`;
+    throw new Error(message);
+  }
+
+  return {
+    buffer: await response.arrayBuffer(),
+    contentType: response.headers.get("content-type") ?? "application/pdf",
+  };
 }
 
 export async function listInventoryProducts(): Promise<ProductStock[]> {

@@ -76,7 +76,8 @@ export function OrdersTable({ orders }: OrdersTableProps) {
       | "resync"
       | "shipping-status"
       | "invoice-status"
-      | "return",
+      | "return"
+      | "shipping-label",
     body?: unknown,
   ) {
     setLoadingId(orderId);
@@ -219,18 +220,26 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                           </div>
                           <div>
                             <span>Detalle de envío</span>
-                            {order.shippedAt ? (
+                            {order.shippingZipnovaShipmentId ? (
                               <>
-                                <p>Enviada el {formatDateTime(order.shippedAt)}</p>
                                 <p>
-                                  {order.shippingCarrier ?? "Sin transportista"}
+                                  {order.shippingCarrier ?? "Correo Argentino"}
                                   {order.shippingTrackingNumber
                                     ? ` · ${order.shippingTrackingNumber}`
                                     : ""}
                                 </p>
+                                {order.shippingRealCost !== null && (
+                                  <p>
+                                    Costo real:{" "}
+                                    {formatCurrency(order.shippingRealCost, order.currency)}
+                                  </p>
+                                )}
+                                {order.shippedAt && (
+                                  <p>Enviada el {formatDateTime(order.shippedAt)}</p>
+                                )}
                               </>
                             ) : (
-                              <p>Todavía no se despachó.</p>
+                              <p>Todavía no se generó la etiqueta.</p>
                             )}
                           </div>
                         </div>
@@ -328,6 +337,26 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                         )}
 
                         <div className="order-detail__actions">
+                          {order.status === "approved" &&
+                            !order.shippingZipnovaShipmentId && (
+                              <button
+                                className="order-action"
+                                disabled={isLoading}
+                                onClick={() => runAction(order.id, "shipping-label")}
+                                type="button"
+                              >
+                                {isLoading ? "Generando…" : "Generar etiqueta de envío"}
+                              </button>
+                            )}
+                          {order.shippingZipnovaShipmentId && (
+                            <a
+                              className="order-action"
+                              href={`/api/admin/orders/${order.id}/shipping-label`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Descargar etiqueta
+                            </a>
+                          )}
                           {order.status === "pending" && (
                             <button
                               className="order-action order-action--danger"
