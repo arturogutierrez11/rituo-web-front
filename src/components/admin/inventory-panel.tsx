@@ -3,11 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
 import type { InventoryMovement, ProductStock } from "@/types/inventory";
 
 interface InventoryPanelProps {
   products: ProductStock[];
+  commercialProducts: ProductStock[];
   movements: InventoryMovement[];
 }
 
@@ -21,6 +23,7 @@ const MOVEMENT_LABELS: Record<InventoryMovement["movementType"], string> = {
 
 const TABS = [
   { key: "stock", label: "Stock" },
+  { key: "prices", label: "Precios" },
   { key: "restock", label: "Ingresar mercadería" },
   { key: "gift", label: "Regalo / donación" },
   { key: "movements", label: "Movimientos" },
@@ -37,7 +40,11 @@ function productLabel(products: ProductStock[], productId: string) {
   return product ? `${product.name} (${product.sku})` : productId.slice(0, 8);
 }
 
-export function InventoryPanel({ products, movements }: InventoryPanelProps) {
+export function InventoryPanel({
+  products,
+  commercialProducts,
+  movements,
+}: InventoryPanelProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>("stock");
   const [restockForm, setRestockForm] = useState({
@@ -54,6 +61,52 @@ export function InventoryPanel({ products, movements }: InventoryPanelProps) {
   });
   const [loading, setLoading] = useState<"restock" | "gift" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [priceDraft, setPriceDraft] = useState("");
+  const [savingPriceId, setSavingPriceId] = useState<string | null>(null);
+
+  function startEditPrice(product: ProductStock) {
+    setEditingPriceId(product.id);
+    setPriceDraft(String(product.price));
+    setError(null);
+  }
+
+  function cancelEditPrice() {
+    setEditingPriceId(null);
+    setPriceDraft("");
+  }
+
+  async function savePrice(productId: string) {
+    const price = Number(priceDraft);
+
+    if (!Number.isFinite(price) || price < 0) {
+      setError("El precio tiene que ser un número mayor o igual a 0.");
+      return;
+    }
+
+    setSavingPriceId(productId);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/inventory/products/${productId}/price`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price }),
+      });
+      const data = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "No pudimos actualizar el precio");
+      }
+
+      setEditingPriceId(null);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ocurrió un error");
+    } finally {
+      setSavingPriceId(null);
+    }
+  }
 
   async function submitRestock(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -178,6 +231,87 @@ export function InventoryPanel({ products, movements }: InventoryPanelProps) {
               </tbody>
             </table>
           </div>
+        </section>
+      )}
+
+      {activeTab === "prices" && (
+        <section className="admin-card">
+          <div className="admin-card__head">
+            <div>
+              <span>Checkout</span>
+              <h2>Precio de los productos comerciales</h2>
+            </div>
+            <p>{commercialProducts.length} productos</p>
+          </div>
+
+          {commercialProducts.length === 0 ? (
+            <div className="admin-empty">
+              <strong>No pudimos cargar el catálogo comercial.</strong>
+              <p>Probá actualizar la página.</p>
+            </div>
+          ) : (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Producto</th>
+                    <th>Precio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {commercialProducts.map((product) => (
+                    <tr key={product.id}>
+                      <td>
+                        <strong>{product.sku}</strong>
+                      </td>
+                      <td>{product.name}</td>
+                      <td>
+                        {editingPriceId === product.id ? (
+                          <div className="inventory-price-edit">
+                            <input
+                              autoFocus
+                              className="inventory-price-input"
+                              min={0}
+                              onChange={(event) => setPriceDraft(event.target.value)}
+                              step="1"
+                              type="number"
+                              value={priceDraft}
+                            />
+                            <button
+                              className="admin-refresh"
+                              disabled={savingPriceId === product.id}
+                              onClick={() => savePrice(product.id)}
+                              type="button"
+                            >
+                              {savingPriceId === product.id ? "…" : "Guardar"}
+                            </button>
+                            <button
+                              className="order-action"
+                              disabled={savingPriceId === product.id}
+                              onClick={cancelEditPrice}
+                              type="button"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="inventory-price-button"
+                            onClick={() => startEditPrice(product)}
+                            type="button"
+                          >
+                            {formatCurrency(product.price, product.currency)}
+                            <span aria-hidden="true">✎</span>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
 

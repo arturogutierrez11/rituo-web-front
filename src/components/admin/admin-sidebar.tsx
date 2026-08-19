@@ -5,6 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 
 const sections = [
   {
+    href: "/rituo-admin/panel",
+    label: "Panel",
+    description: "Resumen general",
+    shortLabel: "HM",
+  },
+  {
     href: "/rituo-admin/orders",
     label: "Órdenes",
     description: "Compras y pagos",
@@ -17,7 +23,7 @@ const sections = [
     shortLabel: "IN",
   },
   {
-    href: "/rituo-admin/panel",
+    href: "/rituo-admin/waitlist",
     label: "Lista de espera",
     description: "Leads de preventa",
     shortLabel: "WL",

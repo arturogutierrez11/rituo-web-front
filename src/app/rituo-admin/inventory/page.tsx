@@ -4,7 +4,11 @@ import Link from "next/link";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
 import { InventoryPanel } from "@/components/admin/inventory-panel";
-import { listInventoryMovements, listInventoryProducts } from "@/services/checkout-api";
+import {
+  listAllProducts,
+  listInventoryMovements,
+  listInventoryProducts,
+} from "@/services/checkout-api";
 import type { InventoryMovement, ProductStock } from "@/types/inventory";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +20,7 @@ export const metadata: Metadata = {
 
 export default async function RituoAdminInventoryPage() {
   let products: ProductStock[] = [];
+  let commercialProducts: ProductStock[] = [];
   let movements: InventoryMovement[] = [];
   let errorMessage: string | null = null;
 
@@ -27,6 +32,14 @@ export default async function RituoAdminInventoryPage() {
   } catch (error) {
     errorMessage =
       error instanceof Error ? error.message : "No pudimos cargar el inventario.";
+  }
+
+  try {
+    commercialProducts = (await listAllProducts()).filter(
+      (product) => !product.isInternal,
+    );
+  } catch {
+    commercialProducts = [];
   }
 
   const totalStock = products.reduce((sum, product) => sum + product.stock, 0);
@@ -67,7 +80,11 @@ export default async function RituoAdminInventoryPage() {
             <p>{errorMessage}</p>
           </div>
         ) : (
-          <InventoryPanel products={products} movements={movements} />
+          <InventoryPanel
+            commercialProducts={commercialProducts}
+            products={products}
+            movements={movements}
+          />
         )}
       </section>
     </main>

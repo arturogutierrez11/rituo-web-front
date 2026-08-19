@@ -308,3 +308,49 @@ export function restockProduct(payload: RestockPayload): Promise<InventoryMoveme
 export function recordGift(payload: RecordGiftPayload): Promise<InventoryMovement> {
   return postInventoryAction("gifts", payload);
 }
+
+export async function listAllProducts(): Promise<ProductStock[]> {
+  const response = await fetch(buildCheckoutUrl("/products/all"), {
+    headers: {
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(`No pudimos cargar el catálogo (${response.status})`);
+  }
+
+  return data as ProductStock[];
+}
+
+export async function updateProductPrice(
+  productId: string,
+  price: number,
+): Promise<ProductStock> {
+  const response = await fetch(buildCheckoutUrl(`/products/${productId}/price`), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    body: JSON.stringify({ price }),
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    const message =
+      data && typeof data === "object" && "message" in data
+        ? String((data as { message: unknown }).message)
+        : `No pudimos actualizar el precio (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data as ProductStock;
+}

@@ -1581,10 +1581,10 @@ main { position: relative; z-index: 1; }
 .admin-card,
 .admin-stat {
   border: 1px solid var(--border);
-  background: rgba(7, 13, 31, 0.72);
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(28px) saturate(1.15);
-  -webkit-backdrop-filter: blur(28px) saturate(1.15);
+  background: rgba(9, 15, 34, 0.86);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .admin-sidebar {
@@ -1595,8 +1595,8 @@ main { position: relative; z-index: 1; }
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
-  border-radius: 30px;
-  padding: 24px;
+  border-radius: 16px;
+  padding: 22px;
 }
 
 .admin-sidebar::before {
@@ -1758,11 +1758,11 @@ main { position: relative; z-index: 1; }
 }
 
 .admin-title-block h1 {
-  margin-top: 10px;
+  margin-top: 6px;
   color: var(--ink);
-  font-size: clamp(2.7rem, 5.5vw, 5.2rem);
-  font-weight: 900;
-  letter-spacing: -0.07em;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .admin-title-block p {
@@ -1827,31 +1827,41 @@ main { position: relative; z-index: 1; }
   gap: 14px;
 }
 
+.admin-panel-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.admin-panel-aside-note {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.admin-panel-aside-note a { color: var(--accent); font-weight: 700; }
+
+@media (max-width: 1180px) {
+  .admin-panel-grid { grid-template-columns: 1fr; }
+}
+
 .admin-stat {
   position: relative;
   overflow: hidden;
-  border-radius: 22px;
-  padding: 20px;
-  animation: reveal-up 520ms ease both;
-}
-
-.admin-stat::before {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 80% 0%, rgba(156, 178, 198, 0.12), transparent 48%);
-  content: "";
-  pointer-events: none;
+  border-radius: 14px;
+  padding: 18px 20px;
 }
 
 .admin-stat > * { position: relative; z-index: 1; }
 
 .admin-stat strong {
   display: block;
-  margin-top: 12px;
+  margin-top: 10px;
   color: var(--ink);
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
-  font-weight: 900;
-  letter-spacing: -0.06em;
+  font-size: clamp(1.4rem, 1.8vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .admin-stat small {
@@ -1864,7 +1874,7 @@ main { position: relative; z-index: 1; }
 
 .admin-card {
   overflow: hidden;
-  border-radius: 30px;
+  border-radius: 16px;
 }
 
 .admin-card__head {
@@ -1872,15 +1882,15 @@ main { position: relative; z-index: 1; }
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: 24px 26px;
+  padding: 20px 22px;
   border-bottom: 1px solid var(--border);
 }
 
 .admin-card__head h2 {
-  margin-top: 8px;
-  font-size: 1.56rem;
-  font-weight: 900;
-  letter-spacing: -0.05em;
+  margin-top: 6px;
+  font-size: 1.24rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .admin-card__head p {
@@ -1898,6 +1908,9 @@ main { position: relative; z-index: 1; }
   min-width: 860px;
   border-collapse: collapse;
 }
+
+.admin-table--compact { min-width: 0; }
+.admin-table--compact th, .admin-table--compact td { padding: 14px 22px; }
 
 .admin-table th,
 .admin-table td {
@@ -2312,6 +2325,41 @@ main { position: relative; z-index: 1; }
 
 .inventory-stock.is-empty {
   color: #f0a8a8;
+}
+
+.inventory-price-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.inventory-price-button:hover { border-color: var(--accent); background: rgba(156, 178, 198, 0.08); }
+.inventory-price-button span { color: var(--accent); font-size: 0.72rem; }
+
+.inventory-price-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inventory-price-input {
+  width: 110px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 14, 32, 0.6);
+  color: var(--ink);
+  font: inherit;
 }
 
 .legal-admin-grid {
