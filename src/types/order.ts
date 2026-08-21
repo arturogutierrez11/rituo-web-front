@@ -9,6 +9,7 @@ export type ShippingStatusValue =
   | "pending_dispatch"
   | "dispatched"
   | "shipped"
+  | "delivered"
   | "cancelled";
 
 export interface Order {
@@ -59,6 +60,7 @@ export interface Order {
   shippedAt: string | null;
   shippingRealCost: number | null;
   shippingZipnovaShipmentId: string | null;
+  shippingZipnovaStatus: string | null;
 
   invoiceStatus: string | null;
   invoicedAt: string | null;

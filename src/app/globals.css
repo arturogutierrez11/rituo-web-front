@@ -2240,6 +2240,7 @@ main { position: relative; z-index: 1; }
 .shipping-status-badge--pending_dispatch { color: var(--muted); }
 .shipping-status-badge--dispatched { border-color: rgba(220, 190, 120, 0.30); background: rgba(180, 145, 60, 0.14); color: #ecd18a; }
 .shipping-status-badge--shipped { border-color: rgba(140, 210, 150, 0.30); background: rgba(90, 165, 110, 0.14); color: #a8e0b4; }
+.shipping-status-badge--delivered { border-color: rgba(156, 178, 198, 0.35); background: rgba(156, 178, 198, 0.16); color: #dce6f0; }
 .shipping-status-badge--cancelled { border-color: rgba(230, 130, 130, 0.30); background: rgba(160, 60, 60, 0.14); color: #f0a8a8; }
 
 .order-detail__controls {

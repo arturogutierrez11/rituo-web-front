@@ -23,6 +23,7 @@ const SHIPPING_STATUS_LABELS: Record<ShippingStatusValue, string> = {
   pending_dispatch: "Por despachar",
   dispatched: "Despachada",
   shipped: "Enviada",
+  delivered: "Entregada",
   cancelled: "Cancelada",
 };
 
@@ -30,6 +31,7 @@ const SHIPPING_STATUS_OPTIONS: ShippingStatusValue[] = [
   "pending_dispatch",
   "dispatched",
   "shipped",
+  "delivered",
   "cancelled",
 ];
 
@@ -236,6 +238,9 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                                 )}
                                 {order.shippedAt && (
                                   <p>Enviada el {formatDateTime(order.shippedAt)}</p>
+                                )}
+                                {order.shippingZipnovaStatus && (
+                                  <p>Zipnova: {order.shippingZipnovaStatus}</p>
                                 )}
                               </>
                             ) : (
