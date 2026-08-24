@@ -15,6 +15,18 @@ export interface WaitlistBroadcastInput {
 export interface WaitlistBroadcastResult {
   totalRecipients: number;
   batchesSent: number;
+  skipped: number;
+}
+
+const PLACEHOLDER_EMAIL_DOMAINS = new Set([
+  "example.com",
+  "example.net",
+  "example.org",
+]);
+
+function isSendableEmail(email: string) {
+  const domain = email.trim().toLowerCase().split("@")[1];
+  return Boolean(domain) && !PLACEHOLDER_EMAIL_DOMAINS.has(domain);
 }
 
 interface ResendEmailPayload {
@@ -148,10 +160,14 @@ export async function sendWaitlistBroadcast(
           updatedAt: new Date().toISOString(),
         } satisfies WaitlistLead,
       ]
-    : [...uniqueLeadsByEmail.values()];
+    : [...uniqueLeadsByEmail.values()].filter((lead) => isSendableEmail(lead.email));
+
+  const skipped = input.testEmail
+    ? 0
+    : uniqueLeadsByEmail.size - recipients.length;
 
   if (recipients.length === 0) {
-    return { totalRecipients: 0, batchesSent: 0 };
+    return { totalRecipients: 0, batchesSent: 0, skipped };
   }
 
   const subject = input.testEmail ? `[PRUEBA] ${input.subject}` : input.subject;
@@ -178,5 +194,5 @@ export async function sendWaitlistBroadcast(
     }
   }
 
-  return { totalRecipients: recipients.length, batchesSent: batches.length };
+  return { totalRecipients: recipients.length, batchesSent: batches.length, skipped };
 }

@@ -40,6 +40,7 @@ export function WaitlistBroadcastForm({
 
     const data = (await response.json().catch(() => ({}))) as {
       totalRecipients?: number;
+      skipped?: number;
       message?: string;
     };
 
@@ -102,7 +103,11 @@ export function WaitlistBroadcastForm({
         operatingSystem: osFilter === "all" ? undefined : osFilter,
       });
       setStatus("success");
-      setFeedback(`Enviado a ${data.totalRecipients ?? recipientCount} personas.`);
+      const skippedNote =
+        data.skipped && data.skipped > 0
+          ? ` (${data.skipped} con email inválido, no se les mandó)`
+          : "";
+      setFeedback(`Enviado a ${data.totalRecipients ?? recipientCount} personas${skippedNote}.`);
       setSubject("");
       setMessage("");
     } catch (error) {
