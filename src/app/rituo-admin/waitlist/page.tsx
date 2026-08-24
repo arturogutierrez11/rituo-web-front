@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
+import { WaitlistBroadcastForm } from "@/components/admin/waitlist-broadcast-form";
 import { WaitlistTable } from "@/components/admin/waitlist-table";
 import { formatDateTime } from "@/lib/format-date";
 import { getWaitlistLeads } from "@/services/waitlist-admin";
@@ -86,6 +87,8 @@ export default async function RituoAdminWaitlistPage() {
             value={latestLead ? latestLead.firstName : "-"}
           />
         </div>
+
+        <WaitlistBroadcastForm recipientCount={leads.length} />
 
         <section className="admin-card">
           <div className="admin-card__head">

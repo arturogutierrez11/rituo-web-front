@@ -37,28 +37,4 @@ export const productsMarketing: ProductMarketing[] = [
     features: ["Tarjeta rituo NFC + acceso lifetime a app"],
     checkoutName: "rituo one",
   },
-  {
-    slug: "tag-two",
-    description:
-      "Pack de 2 tarjetas NFC + packaging premium + acceso a rituales de foco, webs bloqueadas y control.",
-    image: "/images/rituo-one.png",
-    imageAlt: "Packaging abierto de Rituo Tag, pack de 2 unidades",
-    variant: "family",
-    label: "Para acompañar",
-    badge: "Más elegido",
-    packSize: 2,
-    features: ["2 tags NFC", "Control familiar", "Apps y horarios"],
-  },
-  {
-    slug: "tag-ten",
-    description:
-      "Pack de 10 tags NFC y rituales de foco pensados para organizaciones.",
-    image: "/images/rituo-one.png",
-    imageAlt: "Packaging abierto de Rituo Tag, pack de 10 unidades",
-    variant: "business",
-    label: "Para equipos",
-    ctaLabel: "Comprar para mi equipo",
-    packSize: 10,
-    features: ["10 tags NFC", "Onboarding para equipos", "Soporte directo"],
-  },
 ];
