@@ -7,9 +7,11 @@ interface BroadcastPayload {
   subject?: unknown;
   message?: unknown;
   testEmail?: unknown;
+  operatingSystem?: unknown;
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const OS_FILTERS = ["iOS", "Android"] as const;
 
 export async function POST(request: Request) {
   let payload: BroadcastPayload;
@@ -49,8 +51,26 @@ export async function POST(request: Request) {
     );
   }
 
+  const operatingSystem =
+    typeof payload.operatingSystem === "string" && payload.operatingSystem.length > 0
+      ? payload.operatingSystem
+      : undefined;
+
+  if (
+    operatingSystem !== undefined &&
+    !OS_FILTERS.includes(operatingSystem as (typeof OS_FILTERS)[number])
+  ) {
+    return NextResponse.json(
+      { message: "Filtro de sistema operativo inválido." },
+      { status: 400 },
+    );
+  }
+
   try {
-    const leads = await getWaitlistLeads();
+    const allLeads = await getWaitlistLeads();
+    const leads = operatingSystem
+      ? allLeads.filter((lead) => lead.operatingSystem === operatingSystem)
+      : allLeads;
     const result = await sendWaitlistBroadcast({ subject, message, testEmail }, leads);
     return NextResponse.json(result);
   } catch (error) {

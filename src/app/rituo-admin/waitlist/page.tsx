@@ -88,7 +88,11 @@ export default async function RituoAdminWaitlistPage() {
           />
         </div>
 
-        <WaitlistBroadcastForm recipientCount={leads.length} />
+        <WaitlistBroadcastForm
+          totalCount={leads.length}
+          iosCount={iosLeads}
+          androidCount={androidLeads}
+        />
 
         <section className="admin-card">
           <div className="admin-card__head">

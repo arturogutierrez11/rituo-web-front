@@ -3,19 +3,35 @@
 import { useState, type FormEvent } from "react";
 
 interface WaitlistBroadcastFormProps {
-  recipientCount: number;
+  totalCount: number;
+  iosCount: number;
+  androidCount: number;
 }
 
 type Status = "idle" | "sending-test" | "sending" | "success" | "error";
+type OsFilter = "all" | "iOS" | "Android";
 
-export function WaitlistBroadcastForm({ recipientCount }: WaitlistBroadcastFormProps) {
+export function WaitlistBroadcastForm({
+  totalCount,
+  iosCount,
+  androidCount,
+}: WaitlistBroadcastFormProps) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [testEmail, setTestEmail] = useState("");
+  const [osFilter, setOsFilter] = useState<OsFilter>("all");
   const [status, setStatus] = useState<Status>("idle");
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  async function send(body: { subject: string; message: string; testEmail?: string }) {
+  const recipientCount =
+    osFilter === "iOS" ? iosCount : osFilter === "Android" ? androidCount : totalCount;
+
+  async function send(body: {
+    subject: string;
+    message: string;
+    testEmail?: string;
+    operatingSystem?: "iOS" | "Android";
+  }) {
     const response = await fetch("/api/admin/waitlist/broadcast", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -45,7 +61,12 @@ export function WaitlistBroadcastForm({ recipientCount }: WaitlistBroadcastFormP
     setFeedback(null);
 
     try {
-      await send({ subject, message, testEmail });
+      await send({
+        subject,
+        message,
+        testEmail,
+        operatingSystem: osFilter === "all" ? undefined : osFilter,
+      });
       setStatus("success");
       setFeedback(`Prueba enviada a ${testEmail}. Revisá tu bandeja antes de mandarlo a todos.`);
     } catch (error) {
@@ -61,8 +82,10 @@ export function WaitlistBroadcastForm({ recipientCount }: WaitlistBroadcastFormP
       return;
     }
 
+    const audienceLabel =
+      osFilter === "iOS" ? " (solo iOS)" : osFilter === "Android" ? " (solo Android)" : "";
     const confirmed = window.confirm(
-      `Vas a mandar este email a ${recipientCount} persona${recipientCount === 1 ? "" : "s"} de la lista de espera, de verdad. ¿Ya mandaste una prueba y está todo bien? Confirmá para enviar.`,
+      `Vas a mandar este email a ${recipientCount} persona${recipientCount === 1 ? "" : "s"} de la lista de espera${audienceLabel}, de verdad. ¿Ya mandaste una prueba y está todo bien? Confirmá para enviar.`,
     );
 
     if (!confirmed) {
@@ -73,7 +96,11 @@ export function WaitlistBroadcastForm({ recipientCount }: WaitlistBroadcastFormP
     setFeedback(null);
 
     try {
-      const data = await send({ subject, message });
+      const data = await send({
+        subject,
+        message,
+        operatingSystem: osFilter === "all" ? undefined : osFilter,
+      });
       setStatus("success");
       setFeedback(`Enviado a ${data.totalRecipients ?? recipientCount} personas.`);
       setSubject("");
@@ -122,6 +149,47 @@ export function WaitlistBroadcastForm({ recipientCount }: WaitlistBroadcastFormP
           Podés usar <code>{"{{nombre}}"}</code> en el asunto o el mensaje para personalizar
           con el nombre de cada persona.
         </p>
+
+        <fieldset
+          style={{
+            border: "1px solid var(--border, rgba(156,178,198,0.2))",
+            borderRadius: 10,
+            padding: "12px 14px",
+            display: "flex",
+            gap: 18,
+            flexWrap: "wrap",
+            margin: 0,
+          }}
+        >
+          <legend style={{ padding: "0 6px", fontSize: "0.8rem" }}>Destinatarios</legend>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
+            <input
+              type="radio"
+              name="osFilter"
+              checked={osFilter === "all"}
+              onChange={() => setOsFilter("all")}
+            />
+            Todos ({totalCount})
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
+            <input
+              type="radio"
+              name="osFilter"
+              checked={osFilter === "iOS"}
+              onChange={() => setOsFilter("iOS")}
+            />
+            Solo iOS ({iosCount})
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
+            <input
+              type="radio"
+              name="osFilter"
+              checked={osFilter === "Android"}
+              onChange={() => setOsFilter("Android")}
+            />
+            Solo Android ({androidCount})
+          </label>
+        </fieldset>
 
         <label>
           Email para la prueba
