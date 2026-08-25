@@ -3,10 +3,12 @@ import Link from "next/link";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
+import { ManualOrderForm } from "@/components/admin/manual-order-form";
 import { OrdersTable } from "@/components/admin/orders-table";
 import { formatCurrency } from "@/lib/format-currency";
-import { listOrders, listWarehouses } from "@/services/checkout-api";
+import { listOrders, listProducts, listWarehouses } from "@/services/checkout-api";
 import type { Order, OrderStatusValue } from "@/types/order";
+import type { ProductCommerce } from "@/types/product";
 import type { Warehouse } from "@/types/warehouse";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +44,7 @@ export default async function RituoAdminOrdersPage({
 
   let orders: Order[] = [];
   let warehouses: Warehouse[] = [];
+  let products: ProductCommerce[] = [];
   let errorMessage: string | null = null;
 
   try {
@@ -55,6 +58,12 @@ export default async function RituoAdminOrdersPage({
     warehouses = await listWarehouses();
   } catch {
     warehouses = [];
+  }
+
+  try {
+    products = await listProducts();
+  } catch {
+    products = [];
   }
 
   const approvedOrders = orders.filter((order) => order.status === "approved");
@@ -87,6 +96,8 @@ export default async function RituoAdminOrdersPage({
             </Link>
           </div>
         </header>
+
+        <ManualOrderForm products={products} />
 
         <div className="admin-stats" aria-label="Resumen de órdenes">
           <AdminStatCard detail="En este filtro" label="Órdenes" value={orders.length} />

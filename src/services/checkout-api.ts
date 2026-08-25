@@ -3,6 +3,7 @@ import "server-only";
 import type { ProductCommerce } from "@/types/product";
 import type { CheckoutRequestPayload } from "@/types/checkout";
 import type {
+  CreateManualOrderPayload,
   MarkOrderShippedPayload,
   Order,
   OrderStatusValue,
@@ -91,6 +92,33 @@ export async function createOrder(
   }
 
   return data as CreateOrderResult;
+}
+
+export async function createManualOrder(
+  payload: CreateManualOrderPayload,
+): Promise<Order> {
+  const response = await fetch(buildCheckoutUrl("/orders/manual"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    const message =
+      data && typeof data === "object" && "message" in data
+        ? String((data as { message: unknown }).message)
+        : `No pudimos registrar la venta (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data as Order;
 }
 
 export async function getOrder(orderId: string): Promise<Order | null> {

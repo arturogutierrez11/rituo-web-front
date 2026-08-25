@@ -53,6 +53,10 @@ export interface Order {
   mpPaymentStatus: string | null;
   mpPaymentStatusDetail: string | null;
 
+  salesChannel: "mercadopago" | "manual";
+  manualPaymentMethod: string | null;
+  manualPaymentNote: string | null;
+
   shippingStatus: ShippingStatusValue;
   shippingCarrier: string | null;
   shippingTrackingNumber: string | null;
@@ -76,4 +80,35 @@ export interface MarkOrderShippedPayload {
   carrier?: string;
   trackingNumber?: string;
   labelUrl?: string;
+}
+
+export interface CreateManualOrderPayload {
+  productSlug: string;
+  quantity: number;
+  shippingMethod: "standard" | "express";
+  customer: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+  shippingAddress: {
+    address: string;
+    city: string;
+    province: string;
+    postalCode: string;
+  };
+  billing: {
+    dni: string;
+    useShippingAddress: boolean;
+    address?: string;
+    city?: string;
+    province?: string;
+    postalCode?: string;
+    isBusinessPurchase: boolean;
+    cuit?: string;
+    businessName?: string;
+  };
+  manualPaymentMethod: string;
+  manualPaymentNote?: string;
 }
