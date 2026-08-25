@@ -6,11 +6,13 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
 import type { InventoryMovement, ProductStock } from "@/types/inventory";
+import type { Warehouse } from "@/types/warehouse";
 
 interface InventoryPanelProps {
   products: ProductStock[];
   commercialProducts: ProductStock[];
   movements: InventoryMovement[];
+  warehouses: Warehouse[];
 }
 
 const MOVEMENT_LABELS: Record<InventoryMovement["movementType"], string> = {
@@ -27,6 +29,7 @@ const TABS = [
   { key: "restock", label: "Ingresar mercadería" },
   { key: "gift", label: "Regalo / donación" },
   { key: "movements", label: "Movimientos" },
+  { key: "warehouses", label: "Depósitos" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -40,26 +43,50 @@ function productLabel(products: ProductStock[], productId: string) {
   return product ? `${product.name} (${product.sku})` : productId.slice(0, 8);
 }
 
+function warehouseLabel(warehouses: Warehouse[], warehouseId: string | null) {
+  if (!warehouseId) {
+    return "—";
+  }
+  return warehouses.find((item) => item.id === warehouseId)?.name ?? "—";
+}
+
+const EMPTY_WAREHOUSE_FORM = {
+  name: "",
+  addressStreet: "",
+  addressStreetNumber: "",
+  addressCity: "",
+  addressState: "",
+  addressZipcode: "",
+  addressPhone: "",
+  addressEmail: "",
+};
+
 export function InventoryPanel({
   products,
   commercialProducts,
   movements,
+  warehouses,
 }: InventoryPanelProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>("stock");
   const [restockForm, setRestockForm] = useState({
     sku: products[0]?.sku ?? "",
+    warehouseId: warehouses[0]?.id ?? "",
     quantity: "1",
     note: "",
     occurredAt: todayInputValue(),
   });
   const [giftForm, setGiftForm] = useState({
     sku: products[0]?.sku ?? "",
+    warehouseId: warehouses[0]?.id ?? "",
     quantity: "1",
     note: "",
     occurredAt: todayInputValue(),
   });
-  const [loading, setLoading] = useState<"restock" | "gift" | null>(null);
+  const [warehouseForm, setWarehouseForm] = useState(EMPTY_WAREHOUSE_FORM);
+  const [loading, setLoading] = useState<"restock" | "gift" | "warehouse" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [priceDraft, setPriceDraft] = useState("");
@@ -119,6 +146,7 @@ export function InventoryPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sku: restockForm.sku,
+          warehouseId: restockForm.warehouseId,
           quantity: Number(restockForm.quantity),
           note: restockForm.note || undefined,
           occurredAt: restockForm.occurredAt || undefined,
@@ -150,6 +178,7 @@ export function InventoryPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sku: giftForm.sku,
+          warehouseId: giftForm.warehouseId,
           quantity: Number(giftForm.quantity),
           occurredAt: giftForm.occurredAt,
           note: giftForm.note || undefined,
@@ -162,6 +191,32 @@ export function InventoryPanel({
       }
 
       setGiftForm((prev) => ({ ...prev, quantity: "1", note: "" }));
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ocurrió un error");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function submitWarehouse(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading("warehouse");
+    setError(null);
+
+    try {
+      const response = await fetch("/api/admin/warehouses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(warehouseForm),
+      });
+      const data = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "No pudimos crear el depósito");
+      }
+
+      setWarehouseForm(EMPTY_WAREHOUSE_FORM);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ocurrió un error");
@@ -198,7 +253,7 @@ export function InventoryPanel({
           <div className="admin-card__head">
             <div>
               <span>Stock</span>
-              <h2>Stock por SKU</h2>
+              <h2>Stock por SKU y depósito</h2>
             </div>
             <p>{products.length} SKUs</p>
           </div>
@@ -209,7 +264,10 @@ export function InventoryPanel({
                 <tr>
                   <th>SKU</th>
                   <th>Producto</th>
-                  <th>Stock</th>
+                  {warehouses.map((warehouse) => (
+                    <th key={warehouse.id}>{warehouse.name}</th>
+                  ))}
+                  <th>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -219,6 +277,21 @@ export function InventoryPanel({
                       <strong>{product.sku}</strong>
                     </td>
                     <td>{product.name}</td>
+                    {warehouses.map((warehouse) => {
+                      const stock =
+                        product.stockByWarehouse.find(
+                          (entry) => entry.warehouseId === warehouse.id,
+                        )?.stock ?? 0;
+                      return (
+                        <td key={warehouse.id}>
+                          <span
+                            className={`inventory-stock${stock === 0 ? " is-empty" : ""}`}
+                          >
+                            {stock}
+                          </span>
+                        </td>
+                      );
+                    })}
                     <td>
                       <span
                         className={`inventory-stock${product.stock === 0 ? " is-empty" : ""}`}
@@ -341,6 +414,24 @@ export function InventoryPanel({
               </select>
             </label>
             <label>
+              Depósito
+              <select
+                value={restockForm.warehouseId}
+                onChange={(event) =>
+                  setRestockForm((prev) => ({
+                    ...prev,
+                    warehouseId: event.target.value,
+                  }))
+                }
+              >
+                {warehouses.map((warehouse) => (
+                  <option key={warehouse.id} value={warehouse.id}>
+                    {warehouse.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
               Unidades
               <input
                 type="number"
@@ -400,6 +491,24 @@ export function InventoryPanel({
                 {products.map((product) => (
                   <option key={product.sku} value={product.sku}>
                     {product.name} ({product.sku})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Depósito
+              <select
+                value={giftForm.warehouseId}
+                onChange={(event) =>
+                  setGiftForm((prev) => ({
+                    ...prev,
+                    warehouseId: event.target.value,
+                  }))
+                }
+              >
+                {warehouses.map((warehouse) => (
+                  <option key={warehouse.id} value={warehouse.id}>
+                    {warehouse.name}
                   </option>
                 ))}
               </select>
@@ -466,6 +575,7 @@ export function InventoryPanel({
                   <tr>
                     <th>Fecha</th>
                     <th>SKU</th>
+                    <th>Depósito</th>
                     <th>Tipo</th>
                     <th>Cantidad</th>
                     <th>Stock resultante</th>
@@ -477,6 +587,7 @@ export function InventoryPanel({
                     <tr key={movement.id}>
                       <td>{formatDateTime(movement.occurredAt)}</td>
                       <td>{productLabel(products, movement.productId)}</td>
+                      <td>{warehouseLabel(warehouses, movement.warehouseId)}</td>
                       <td>{MOVEMENT_LABELS[movement.movementType] ?? movement.movementType}</td>
                       <td>
                         {movement.quantityDelta > 0
@@ -495,6 +606,181 @@ export function InventoryPanel({
             </div>
           )}
         </section>
+      )}
+
+      {activeTab === "warehouses" && (
+        <>
+          <section className="admin-card">
+            <div className="admin-card__head">
+              <div>
+                <span>Logística</span>
+                <h2>Depósitos</h2>
+              </div>
+              <p>{warehouses.length} activos</p>
+            </div>
+
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Dirección</th>
+                    <th>Contacto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {warehouses.map((warehouse) => (
+                    <tr key={warehouse.id}>
+                      <td>
+                        <strong>{warehouse.name}</strong>
+                      </td>
+                      <td>
+                        {[
+                          warehouse.addressStreet,
+                          warehouse.addressCity,
+                          warehouse.addressState,
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "—"}
+                      </td>
+                      <td>{warehouse.addressPhone ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="admin-card">
+            <div className="admin-card__head">
+              <div>
+                <span>Logística</span>
+                <h2>Registrar nuevo depósito</h2>
+              </div>
+            </div>
+
+            <p style={{ color: "var(--muted)", fontSize: "0.8rem", margin: "-8px 0 12px" }}>
+              Se da de alta también como origen de envío en Zipnova — no hace falta
+              cargarlo a mano en su dashboard.
+            </p>
+
+            <form className="inventory-form" onSubmit={submitWarehouse}>
+              <label>
+                Nombre
+                <input
+                  type="text"
+                  placeholder="Ej: Depósito Centro"
+                  required
+                  value={warehouseForm.name}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({ ...prev, name: event.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Calle
+                <input
+                  type="text"
+                  required
+                  value={warehouseForm.addressStreet}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      addressStreet: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Altura
+                <input
+                  type="text"
+                  required
+                  value={warehouseForm.addressStreetNumber}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      addressStreetNumber: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Ciudad
+                <input
+                  type="text"
+                  required
+                  value={warehouseForm.addressCity}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      addressCity: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Provincia
+                <input
+                  type="text"
+                  required
+                  value={warehouseForm.addressState}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      addressState: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Código postal
+                <input
+                  type="text"
+                  required
+                  value={warehouseForm.addressZipcode}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      addressZipcode: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Teléfono
+                <input
+                  type="text"
+                  required
+                  value={warehouseForm.addressPhone}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      addressPhone: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Email
+                <input
+                  type="email"
+                  required
+                  value={warehouseForm.addressEmail}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      addressEmail: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <button className="admin-refresh" disabled={loading === "warehouse"} type="submit">
+                {loading === "warehouse" ? "Creando…" : "Crear depósito"}
+              </button>
+            </form>
+          </section>
+        </>
       )}
     </>
   );

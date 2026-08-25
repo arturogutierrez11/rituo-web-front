@@ -9,11 +9,20 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(_request: Request, { params }: RouteParams) {
+export async function POST(request: Request, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    return NextResponse.json(await generateShippingLabel(id));
+    const body = (await request.json()) as { warehouseId?: string };
+
+    if (!body.warehouseId) {
+      return NextResponse.json(
+        { message: "Falta elegir el depósito de origen." },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json(await generateShippingLabel(id, body.warehouseId));
   } catch (error) {
     return NextResponse.json(
       {

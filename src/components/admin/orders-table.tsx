@@ -6,9 +6,11 @@ import { Fragment, useState } from "react";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
 import type { Order, ShippingStatusValue } from "@/types/order";
+import type { Warehouse } from "@/types/warehouse";
 
 interface OrdersTableProps {
   orders: Order[];
+  warehouses: Warehouse[];
 }
 
 const STATUS_LABELS: Record<Order["status"], string> = {
@@ -51,7 +53,7 @@ function ShippingStatusBadge({ status }: { status: ShippingStatusValue }) {
   );
 }
 
-export function OrdersTable({ orders }: OrdersTableProps) {
+export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [shipFormId, setShipFormId] = useState<string | null>(null);
@@ -59,6 +61,9 @@ export function OrdersTable({ orders }: OrdersTableProps) {
   const [errorByOrder, setErrorByOrder] = useState<Record<string, string>>({});
   const [pendingShippingStatus, setPendingShippingStatus] = useState<
     Record<string, ShippingStatusValue>
+  >({});
+  const [labelWarehouseByOrder, setLabelWarehouseByOrder] = useState<
+    Record<string, string>
   >({});
 
   if (orders.length === 0) {
@@ -343,15 +348,43 @@ export function OrdersTable({ orders }: OrdersTableProps) {
 
                         <div className="order-detail__actions">
                           {order.status === "approved" &&
-                            !order.shippingZipnovaShipmentId && (
-                              <button
-                                className="order-action"
-                                disabled={isLoading}
-                                onClick={() => runAction(order.id, "shipping-label")}
-                                type="button"
-                              >
-                                {isLoading ? "Generando…" : "Generar etiqueta de envío"}
-                              </button>
+                            !order.shippingZipnovaShipmentId &&
+                            warehouses.length > 0 && (
+                              <div className="order-detail__label-picker">
+                                <select
+                                  disabled={isLoading}
+                                  onChange={(event) =>
+                                    setLabelWarehouseByOrder((prev) => ({
+                                      ...prev,
+                                      [order.id]: event.target.value,
+                                    }))
+                                  }
+                                  onClick={(event) => event.stopPropagation()}
+                                  value={
+                                    labelWarehouseByOrder[order.id] ?? warehouses[0].id
+                                  }
+                                >
+                                  {warehouses.map((warehouse) => (
+                                    <option key={warehouse.id} value={warehouse.id}>
+                                      {warehouse.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  className="order-action"
+                                  disabled={isLoading}
+                                  onClick={() =>
+                                    runAction(order.id, "shipping-label", {
+                                      warehouseId:
+                                        labelWarehouseByOrder[order.id] ??
+                                        warehouses[0].id,
+                                    })
+                                  }
+                                  type="button"
+                                >
+                                  {isLoading ? "Generando…" : "Generar etiqueta de envío"}
+                                </button>
+                              </div>
                             )}
                           {order.shippingZipnovaShipmentId && (
                             <a

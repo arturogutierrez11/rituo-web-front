@@ -8,8 +8,10 @@ import {
   listAllProducts,
   listInventoryMovements,
   listInventoryProducts,
+  listWarehouses,
 } from "@/services/checkout-api";
 import type { InventoryMovement, ProductStock } from "@/types/inventory";
+import type { Warehouse } from "@/types/warehouse";
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +24,14 @@ export default async function RituoAdminInventoryPage() {
   let products: ProductStock[] = [];
   let commercialProducts: ProductStock[] = [];
   let movements: InventoryMovement[] = [];
+  let warehouses: Warehouse[] = [];
   let errorMessage: string | null = null;
 
   try {
-    [products, movements] = await Promise.all([
+    [products, movements, warehouses] = await Promise.all([
       listInventoryProducts(),
       listInventoryMovements(),
+      listWarehouses(),
     ]);
   } catch (error) {
     errorMessage =
@@ -84,6 +88,7 @@ export default async function RituoAdminInventoryPage() {
             commercialProducts={commercialProducts}
             products={products}
             movements={movements}
+            warehouses={warehouses}
           />
         )}
       </section>

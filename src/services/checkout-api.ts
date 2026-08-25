@@ -14,6 +14,7 @@ import type {
   RecordGiftPayload,
   RestockPayload,
 } from "@/types/inventory";
+import type { CreateWarehousePayload, Warehouse } from "@/types/warehouse";
 
 const DEFAULT_CHECKOUT_API_URL = "http://localhost:3001";
 
@@ -201,8 +202,11 @@ export function returnOrder(orderId: string, note?: string): Promise<Order> {
   return postOrderAction(orderId, "return", note ? { note } : undefined);
 }
 
-export function generateShippingLabel(orderId: string): Promise<Order> {
-  return postOrderAction(orderId, "shipping-label");
+export function generateShippingLabel(
+  orderId: string,
+  warehouseId: string,
+): Promise<Order> {
+  return postOrderAction(orderId, "shipping-label", { warehouseId });
 }
 
 export async function downloadShippingLabel(
@@ -353,4 +357,49 @@ export async function updateProductPrice(
   }
 
   return data as ProductStock;
+}
+
+export async function listWarehouses(): Promise<Warehouse[]> {
+  const response = await fetch(buildCheckoutUrl("/warehouses"), {
+    headers: {
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(`No pudimos cargar los depósitos (${response.status})`);
+  }
+
+  return data as Warehouse[];
+}
+
+export async function createWarehouse(
+  payload: CreateWarehousePayload,
+): Promise<Warehouse> {
+  const response = await fetch(buildCheckoutUrl("/warehouses"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    const message =
+      data && typeof data === "object" && "message" in data
+        ? String((data as { message: unknown }).message)
+        : `No pudimos crear el depósito (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data as Warehouse;
 }

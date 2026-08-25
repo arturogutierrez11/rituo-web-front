@@ -5,8 +5,9 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
 import { OrdersTable } from "@/components/admin/orders-table";
 import { formatCurrency } from "@/lib/format-currency";
-import { listOrders } from "@/services/checkout-api";
+import { listOrders, listWarehouses } from "@/services/checkout-api";
 import type { Order, OrderStatusValue } from "@/types/order";
+import type { Warehouse } from "@/types/warehouse";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function RituoAdminOrdersPage({
   const activeStatus = (status as OrderStatusValue | undefined) ?? undefined;
 
   let orders: Order[] = [];
+  let warehouses: Warehouse[] = [];
   let errorMessage: string | null = null;
 
   try {
@@ -47,6 +49,12 @@ export default async function RituoAdminOrdersPage({
   } catch (error) {
     errorMessage =
       error instanceof Error ? error.message : "No pudimos cargar las órdenes.";
+  }
+
+  try {
+    warehouses = await listWarehouses();
+  } catch {
+    warehouses = [];
   }
 
   const approvedOrders = orders.filter((order) => order.status === "approved");
@@ -117,7 +125,7 @@ export default async function RituoAdminOrdersPage({
               <p>{errorMessage}</p>
             </div>
           ) : (
-            <OrdersTable orders={orders} />
+            <OrdersTable orders={orders} warehouses={warehouses} />
           )}
         </section>
       </section>

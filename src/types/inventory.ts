@@ -1,5 +1,12 @@
 export type MovementType = "sale" | "cancellation" | "return" | "gift" | "restock";
 
+export interface ProductWarehouseStock {
+  warehouseId: string;
+  warehouseSlug: string;
+  warehouseName: string;
+  stock: number;
+}
+
 export interface ProductStock {
   id: string;
   slug: string;
@@ -10,6 +17,7 @@ export interface ProductStock {
   stock: number;
   isActive: boolean;
   isInternal: boolean;
+  stockByWarehouse: ProductWarehouseStock[];
 }
 
 export interface InventoryMovement {
@@ -19,6 +27,7 @@ export interface InventoryMovement {
   quantityDelta: number;
   stockAfter: number;
   orderId: string | null;
+  warehouseId: string | null;
   note: string | null;
   occurredAt: string;
   createdAt: string;
@@ -26,6 +35,7 @@ export interface InventoryMovement {
 
 export interface RestockPayload {
   sku: string;
+  warehouseId: string;
   quantity: number;
   note?: string;
   occurredAt?: string;
@@ -33,6 +43,7 @@ export interface RestockPayload {
 
 export interface RecordGiftPayload {
   sku: string;
+  warehouseId: string;
   quantity: number;
   occurredAt: string;
   note?: string;
