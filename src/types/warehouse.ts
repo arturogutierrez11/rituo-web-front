@@ -14,6 +14,7 @@ export interface Warehouse {
 
 export interface CreateWarehousePayload {
   name: string;
+  document: string;
   addressStreet: string;
   addressStreetNumber: string;
   addressCity: string;

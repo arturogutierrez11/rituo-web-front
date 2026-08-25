@@ -21,6 +21,7 @@ const MOVEMENT_LABELS: Record<InventoryMovement["movementType"], string> = {
   return: "Devolución",
   gift: "Regalo / donación",
   restock: "Ingreso de mercadería",
+  adjustment: "Ajuste por conteo",
 };
 
 const TABS = [
@@ -28,6 +29,7 @@ const TABS = [
   { key: "prices", label: "Precios" },
   { key: "restock", label: "Ingresar mercadería" },
   { key: "gift", label: "Regalo / donación" },
+  { key: "adjust", label: "Ajustar stock" },
   { key: "movements", label: "Movimientos" },
   { key: "warehouses", label: "Depósitos" },
 ] as const;
@@ -43,6 +45,14 @@ function productLabel(products: ProductStock[], productId: string) {
   return product ? `${product.name} (${product.sku})` : productId.slice(0, 8);
 }
 
+function currentStockFor(products: ProductStock[], sku: string, warehouseId: string) {
+  const product = products.find((item) => item.sku === sku);
+  return (
+    product?.stockByWarehouse.find((entry) => entry.warehouseId === warehouseId)
+      ?.stock ?? 0
+  );
+}
+
 function warehouseLabel(warehouses: Warehouse[], warehouseId: string | null) {
   if (!warehouseId) {
     return "—";
@@ -52,6 +62,7 @@ function warehouseLabel(warehouses: Warehouse[], warehouseId: string | null) {
 
 const EMPTY_WAREHOUSE_FORM = {
   name: "",
+  document: "",
   addressStreet: "",
   addressStreetNumber: "",
   addressCity: "",
@@ -84,9 +95,18 @@ export function InventoryPanel({
     occurredAt: todayInputValue(),
   });
   const [warehouseForm, setWarehouseForm] = useState(EMPTY_WAREHOUSE_FORM);
-  const [loading, setLoading] = useState<"restock" | "gift" | "warehouse" | null>(
-    null,
-  );
+  const [adjustForm, setAdjustForm] = useState({
+    sku: products[0]?.sku ?? "",
+    warehouseId: warehouses[0]?.id ?? "",
+    newStock: String(
+      currentStockFor(products, products[0]?.sku ?? "", warehouses[0]?.id ?? ""),
+    ),
+    note: "",
+    occurredAt: todayInputValue(),
+  });
+  const [loading, setLoading] = useState<
+    "restock" | "gift" | "warehouse" | "adjust" | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [priceDraft, setPriceDraft] = useState("");
@@ -191,6 +211,38 @@ export function InventoryPanel({
       }
 
       setGiftForm((prev) => ({ ...prev, quantity: "1", note: "" }));
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ocurrió un error");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function submitAdjust(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading("adjust");
+    setError(null);
+
+    try {
+      const response = await fetch("/api/admin/inventory/adjustments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sku: adjustForm.sku,
+          warehouseId: adjustForm.warehouseId,
+          newStock: Number(adjustForm.newStock),
+          occurredAt: adjustForm.occurredAt || undefined,
+          note: adjustForm.note || undefined,
+        }),
+      });
+      const data = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "No pudimos ajustar el stock");
+      }
+
+      setAdjustForm((prev) => ({ ...prev, note: "" }));
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ocurrió un error");
@@ -553,6 +605,100 @@ export function InventoryPanel({
         </section>
       )}
 
+      {activeTab === "adjust" && (
+        <section className="admin-card">
+          <div className="admin-card__head">
+            <div>
+              <span>Conteo físico</span>
+              <h2>Ajustar stock</h2>
+            </div>
+          </div>
+
+          <p style={{ color: "var(--muted)", fontSize: "0.8rem", margin: "-8px 0 12px" }}>
+            Para cuando contás el stock a mano y no coincide con el sistema —
+            poné el número real, no cuánto sumar o restar.
+          </p>
+
+          <form className="inventory-form" onSubmit={submitAdjust}>
+            <label>
+              SKU
+              <select
+                value={adjustForm.sku}
+                onChange={(event) => {
+                  const sku = event.target.value;
+                  setAdjustForm((prev) => ({
+                    ...prev,
+                    sku,
+                    newStock: String(currentStockFor(products, sku, prev.warehouseId)),
+                  }));
+                }}
+              >
+                {products.map((product) => (
+                  <option key={product.sku} value={product.sku}>
+                    {product.name} ({product.sku})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Depósito
+              <select
+                value={adjustForm.warehouseId}
+                onChange={(event) => {
+                  const warehouseId = event.target.value;
+                  setAdjustForm((prev) => ({
+                    ...prev,
+                    warehouseId,
+                    newStock: String(currentStockFor(products, prev.sku, warehouseId)),
+                  }));
+                }}
+              >
+                {warehouses.map((warehouse) => (
+                  <option key={warehouse.id} value={warehouse.id}>
+                    {warehouse.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Stock real (conteo)
+              <input
+                type="number"
+                min={0}
+                value={adjustForm.newStock}
+                onChange={(event) =>
+                  setAdjustForm((prev) => ({ ...prev, newStock: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Fecha del conteo
+              <input
+                type="date"
+                value={adjustForm.occurredAt}
+                onChange={(event) =>
+                  setAdjustForm((prev) => ({ ...prev, occurredAt: event.target.value }))
+                }
+              />
+            </label>
+            <label className="inventory-form__note">
+              Nota (opcional)
+              <input
+                type="text"
+                placeholder="Ej: conteo mensual de agosto"
+                value={adjustForm.note}
+                onChange={(event) =>
+                  setAdjustForm((prev) => ({ ...prev, note: event.target.value }))
+                }
+              />
+            </label>
+            <button className="admin-refresh" disabled={loading === "adjust"} type="submit">
+              {loading === "adjust" ? "Guardando…" : "Guardar ajuste"}
+            </button>
+          </form>
+        </section>
+      )}
+
       {activeTab === "movements" && (
         <section className="admin-card">
           <div className="admin-card__head">
@@ -674,6 +820,21 @@ export function InventoryPanel({
                   value={warehouseForm.name}
                   onChange={(event) =>
                     setWarehouseForm((prev) => ({ ...prev, name: event.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                CUIT / Documento
+                <input
+                  type="text"
+                  placeholder="Ej: 20-12345678-6"
+                  required
+                  value={warehouseForm.document}
+                  onChange={(event) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      document: event.target.value,
+                    }))
                   }
                 />
               </label>

@@ -1,4 +1,5 @@
-export type MovementType = "sale" | "cancellation" | "return" | "gift" | "restock";
+export type MovementType =
+  "sale" | "cancellation" | "return" | "gift" | "restock" | "adjustment";
 
 export interface ProductWarehouseStock {
   warehouseId: string;
@@ -47,4 +48,12 @@ export interface RecordGiftPayload {
   quantity: number;
   occurredAt: string;
   note?: string;
+}
+
+export interface AdjustStockPayload {
+  sku: string;
+  warehouseId: string;
+  newStock: number;
+  note?: string;
+  occurredAt?: string;
 }

@@ -9,6 +9,7 @@ import type {
   ShippingStatusValue,
 } from "@/types/order";
 import type {
+  AdjustStockPayload,
   InventoryMovement,
   ProductStock,
   RecordGiftPayload,
@@ -278,7 +279,7 @@ export async function listInventoryMovements(
 }
 
 async function postInventoryAction(
-  path: "restock" | "gifts",
+  path: "restock" | "gifts" | "adjustments",
   body: unknown,
 ): Promise<InventoryMovement> {
   const response = await fetch(buildCheckoutUrl(`/inventory/${path}`), {
@@ -311,6 +312,10 @@ export function restockProduct(payload: RestockPayload): Promise<InventoryMoveme
 
 export function recordGift(payload: RecordGiftPayload): Promise<InventoryMovement> {
   return postInventoryAction("gifts", payload);
+}
+
+export function adjustStock(payload: AdjustStockPayload): Promise<InventoryMovement> {
+  return postInventoryAction("adjustments", payload);
 }
 
 export async function listAllProducts(): Promise<ProductStock[]> {
