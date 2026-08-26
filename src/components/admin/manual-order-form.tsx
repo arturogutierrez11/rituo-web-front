@@ -12,10 +12,15 @@ interface ManualOrderFormProps {
 
 const PAYMENT_METHODS = ["Efectivo", "Transferencia", "Otro"];
 
+function emptyClass(value: string) {
+  return value.trim() ? "" : "manual-order-field--empty";
+}
+
 function emptyForm(products: ProductCommerce[]) {
   return {
     productSlug: products[0]?.slug ?? "",
     quantity: "1",
+    unitPrice: String(products[0]?.price ?? 0),
     shippingMethod: "standard" as "standard" | "express",
     firstName: "",
     lastName: "",
@@ -49,6 +54,11 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const selectedProduct = products.find((product) => product.slug === form.productSlug);
+  const unitPriceNumber = Number(form.unitPrice) || 0;
+  const quantityNumber = Number(form.quantity) || 0;
+  const subtotal = unitPriceNumber * quantityNumber;
+  const isDiscounted =
+    selectedProduct != null && unitPriceNumber !== selectedProduct.price;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -97,6 +107,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           },
           manualPaymentMethod: form.manualPaymentMethod,
           manualPaymentNote: form.manualPaymentNote || undefined,
+          unitPriceOverride: unitPriceNumber,
         }),
       });
       const data = (await response.json()) as { message?: string; id?: string };
@@ -146,9 +157,15 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           Producto
           <select
             value={form.productSlug}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, productSlug: event.target.value }))
-            }
+            onChange={(event) => {
+              const productSlug = event.target.value;
+              const product = products.find((item) => item.slug === productSlug);
+              setForm((prev) => ({
+                ...prev,
+                productSlug,
+                unitPrice: String(product?.price ?? 0),
+              }));
+            }}
           >
             {products.map((product) => (
               <option key={product.slug} value={product.slug}>
@@ -169,6 +186,17 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           />
         </label>
         <label>
+          Precio unitario
+          <input
+            type="number"
+            min={0}
+            value={form.unitPrice}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, unitPrice: event.target.value }))
+            }
+          />
+        </label>
+        <label>
           Envío
           <select
             value={form.shippingMethod}
@@ -184,11 +212,22 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           </select>
         </label>
 
+        <p style={{ color: "var(--muted)", fontSize: "0.8rem", margin: "-4px 0 0" }}>
+          Subtotal:{" "}
+          <strong>{formatCurrency(subtotal, selectedProduct?.currency ?? "ARS")}</strong>
+          {isDiscounted && " (precio unitario editado)"}
+        </p>
+
+        <p style={{ color: "var(--muted)", fontSize: "0.78rem", margin: "0" }}>
+          Los campos de abajo son opcionales — dejalos vacíos si no tenés el dato
+          (quedan marcados en naranja como recordatorio).
+        </p>
+
         <label>
           Nombre
           <input
             type="text"
-            required
+            className={emptyClass(form.firstName)}
             value={form.firstName}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, firstName: event.target.value }))
@@ -199,7 +238,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           Apellido
           <input
             type="text"
-            required
+            className={emptyClass(form.lastName)}
             value={form.lastName}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, lastName: event.target.value }))
@@ -210,7 +249,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           Email
           <input
             type="email"
-            required
+            className={emptyClass(form.email)}
             value={form.email}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, email: event.target.value }))
@@ -221,7 +260,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           Teléfono
           <input
             type="text"
-            required
+            className={emptyClass(form.phone)}
             value={form.phone}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, phone: event.target.value }))
@@ -233,7 +272,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           Dirección de envío
           <input
             type="text"
-            required
+            className={emptyClass(form.address)}
             value={form.address}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, address: event.target.value }))
@@ -244,7 +283,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           Ciudad
           <input
             type="text"
-            required
+            className={emptyClass(form.city)}
             value={form.city}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, city: event.target.value }))
@@ -255,7 +294,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           Provincia
           <input
             type="text"
-            required
+            className={emptyClass(form.province)}
             value={form.province}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, province: event.target.value }))
@@ -266,7 +305,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           Código postal
           <input
             type="text"
-            required
+            className={emptyClass(form.postalCode)}
             value={form.postalCode}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, postalCode: event.target.value }))
@@ -278,7 +317,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
           DNI
           <input
             type="text"
-            required
+            className={emptyClass(form.dni)}
             value={form.dni}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, dni: event.target.value }))
@@ -302,7 +341,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
               Dirección de facturación
               <input
                 type="text"
-                required
+                className={emptyClass(form.billingAddress)}
                 value={form.billingAddress}
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, billingAddress: event.target.value }))
@@ -313,7 +352,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
               Ciudad de facturación
               <input
                 type="text"
-                required
+                className={emptyClass(form.billingCity)}
                 value={form.billingCity}
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, billingCity: event.target.value }))
@@ -324,7 +363,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
               Provincia de facturación
               <input
                 type="text"
-                required
+                className={emptyClass(form.billingProvince)}
                 value={form.billingProvince}
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, billingProvince: event.target.value }))
@@ -335,7 +374,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
               Código postal de facturación
               <input
                 type="text"
-                required
+                className={emptyClass(form.billingPostalCode)}
                 value={form.billingPostalCode}
                 onChange={(event) =>
                   setForm((prev) => ({
@@ -365,7 +404,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
               CUIT
               <input
                 type="text"
-                required
+                className={emptyClass(form.cuit)}
                 value={form.cuit}
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, cuit: event.target.value }))
@@ -376,7 +415,7 @@ export function ManualOrderForm({ products }: ManualOrderFormProps) {
               Razón social
               <input
                 type="text"
-                required
+                className={emptyClass(form.businessName)}
                 value={form.businessName}
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, businessName: event.target.value }))

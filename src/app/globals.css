@@ -2459,6 +2459,11 @@ main { position: relative; z-index: 1; }
   flex: 0 0 auto;
 }
 
+.manual-order-field--empty {
+  border-color: #c98a3b !important;
+  background: rgba(201, 138, 59, 0.10) !important;
+}
+
 .inventory-stock {
   font-weight: 600;
 }
