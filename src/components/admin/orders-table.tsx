@@ -85,7 +85,8 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
       | "invoice-status"
       | "return"
       | "shipping-label"
-      | "shipping-label/reset",
+      | "shipping-label/reset"
+      | "reserve-stock",
     body?: unknown,
   ) {
     setLoadingId(orderId);
@@ -390,6 +391,20 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
                                     </option>
                                   ))}
                                 </select>
+                                <button
+                                  className="order-action"
+                                  disabled={isLoading}
+                                  onClick={() =>
+                                    runAction(order.id, "reserve-stock", {
+                                      warehouseId:
+                                        labelWarehouseByOrder[order.id] ??
+                                        warehouses[0].id,
+                                    })
+                                  }
+                                  type="button"
+                                >
+                                  {isLoading ? "Asignando…" : "Asignar depósito"}
+                                </button>
                                 <button
                                   className="order-action"
                                   disabled={isLoading}

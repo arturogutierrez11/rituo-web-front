@@ -2339,6 +2339,7 @@ main { position: relative; z-index: 1; }
 .order-detail__label-picker {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

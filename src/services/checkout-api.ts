@@ -172,7 +172,8 @@ async function postOrderAction(
     | "invoice-status"
     | "return"
     | "shipping-label"
-    | "shipping-label/reset",
+    | "shipping-label/reset"
+    | "reserve-stock",
   body?: unknown,
 ): Promise<Order> {
   const response = await fetch(buildCheckoutUrl(`/orders/${orderId}/${action}`), {
@@ -241,6 +242,13 @@ export function generateShippingLabel(
 
 export function resetShippingLabel(orderId: string): Promise<Order> {
   return postOrderAction(orderId, "shipping-label/reset");
+}
+
+export function reserveOrderStock(
+  orderId: string,
+  warehouseId: string,
+): Promise<Order> {
+  return postOrderAction(orderId, "reserve-stock", { warehouseId });
 }
 
 export async function downloadShippingLabel(
