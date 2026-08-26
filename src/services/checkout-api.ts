@@ -17,6 +17,7 @@ import type {
   RestockPayload,
 } from "@/types/inventory";
 import type { CreateWarehousePayload, Warehouse } from "@/types/warehouse";
+import type { AdminUser } from "@/types/admin-user";
 
 const DEFAULT_CHECKOUT_API_URL = "http://localhost:3001";
 
@@ -173,7 +174,8 @@ async function postOrderAction(
     | "return"
     | "shipping-label"
     | "shipping-label/reset"
-    | "reserve-stock",
+    | "reserve-stock"
+    | "assign-admin",
   body?: unknown,
 ): Promise<Order> {
   const response = await fetch(buildCheckoutUrl(`/orders/${orderId}/${action}`), {
@@ -249,6 +251,31 @@ export function reserveOrderStock(
   warehouseId: string,
 ): Promise<Order> {
   return postOrderAction(orderId, "reserve-stock", { warehouseId });
+}
+
+export async function listAdmins(): Promise<AdminUser[]> {
+  const response = await fetch(buildCheckoutUrl("/orders/admins"), {
+    headers: {
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(`No pudimos cargar los admins (${response.status})`);
+  }
+
+  return data as AdminUser[];
+}
+
+export function assignOrderAdmin(
+  orderId: string,
+  adminUserId: string | null,
+): Promise<Order> {
+  return postOrderAction(orderId, "assign-admin", { adminUserId });
 }
 
 export async function downloadShippingLabel(

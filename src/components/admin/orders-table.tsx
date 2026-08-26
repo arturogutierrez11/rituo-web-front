@@ -5,12 +5,22 @@ import { Fragment, useState } from "react";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
+import type { AdminUser } from "@/types/admin-user";
 import type { Order, ShippingStatusValue } from "@/types/order";
 import type { Warehouse } from "@/types/warehouse";
 
 interface OrdersTableProps {
   orders: Order[];
   warehouses: Warehouse[];
+  admins: AdminUser[];
+}
+
+function adminLabel(admins: AdminUser[], adminId: string | null) {
+  if (!adminId) {
+    return "Sin asignar";
+  }
+  const admin = admins.find((item) => item.id === adminId);
+  return admin?.displayName ?? admin?.email ?? "Sin asignar";
 }
 
 const STATUS_LABELS: Record<Order["status"], string> = {
@@ -53,7 +63,7 @@ function ShippingStatusBadge({ status }: { status: ShippingStatusValue }) {
   );
 }
 
-export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
+export function OrdersTable({ orders, warehouses, admins }: OrdersTableProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [shipFormId, setShipFormId] = useState<string | null>(null);
@@ -86,7 +96,8 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
       | "return"
       | "shipping-label"
       | "shipping-label/reset"
-      | "reserve-stock",
+      | "reserve-stock"
+      | "assign-admin",
     body?: unknown,
   ) {
     setLoadingId(orderId);
@@ -138,6 +149,7 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
             <th>Total</th>
             <th>Pago</th>
             <th>Envío</th>
+            <th>Responsable</th>
             <th>Fecha</th>
           </tr>
         </thead>
@@ -185,6 +197,7 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
                   <td>
                     <ShippingStatusBadge status={order.shippingStatus} />
                   </td>
+                  <td>{adminLabel(admins, order.assignedAdminId)}</td>
                   <td>
                     <div className="admin-date">
                       <strong>{formatDateTime(order.createdAt)}</strong>
@@ -193,7 +206,7 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
                 </tr>
                 {isExpanded && (
                   <tr className="order-detail-row">
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <div className="order-detail">
                         <div className="order-detail__grid">
                           <div>
@@ -319,6 +332,29 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
                               >
                                 {isInvoiced ? "Marcar no facturada" : "Marcar facturada"}
                               </button>
+                            </div>
+                          </div>
+
+                          <div className="order-status-control">
+                            <span>Responsable</span>
+                            <div className="order-status-control__row">
+                              <select
+                                disabled={isLoading}
+                                onChange={(event) =>
+                                  runAction(order.id, "assign-admin", {
+                                    adminUserId: event.target.value || null,
+                                  })
+                                }
+                                onClick={(event) => event.stopPropagation()}
+                                value={order.assignedAdminId ?? ""}
+                              >
+                                <option value="">Sin asignar</option>
+                                {admins.map((admin) => (
+                                  <option key={admin.id} value={admin.id}>
+                                    {admin.displayName ?? admin.email ?? admin.id.slice(0, 8)}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </div>
                         </div>

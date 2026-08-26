@@ -57,6 +57,8 @@ export interface Order {
   manualPaymentMethod: string | null;
   manualPaymentNote: string | null;
 
+  assignedAdminId: string | null;
+
   shippingStatus: ShippingStatusValue;
   shippingCarrier: string | null;
   shippingTrackingNumber: string | null;
