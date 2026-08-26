@@ -84,7 +84,8 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
       | "shipping-status"
       | "invoice-status"
       | "return"
-      | "shipping-label",
+      | "shipping-label"
+      | "shipping-label/reset",
     body?: unknown,
   ) {
     setLoadingId(orderId);
@@ -413,6 +414,23 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
                             >
                               Descargar etiqueta
                             </a>
+                          )}
+                          {order.shippingZipnovaShipmentId && (
+                            <button
+                              className="order-action order-action--danger"
+                              disabled={isLoading}
+                              onClick={() => {
+                                const confirmed = window.confirm(
+                                  "Esto solo tiene sentido si ya anulaste este envío del lado de Zipnova. Va a devolver el stock reservado y te va a dejar generar una etiqueta nueva. ¿Confirmás?",
+                                );
+                                if (confirmed) {
+                                  runAction(order.id, "shipping-label/reset");
+                                }
+                              }}
+                              type="button"
+                            >
+                              {isLoading ? "Reiniciando…" : "Reintentar etiqueta"}
+                            </button>
                           )}
                           {order.status === "pending" && (
                             <button

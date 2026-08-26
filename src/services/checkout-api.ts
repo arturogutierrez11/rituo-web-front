@@ -171,7 +171,8 @@ async function postOrderAction(
     | "shipping-status"
     | "invoice-status"
     | "return"
-    | "shipping-label",
+    | "shipping-label"
+    | "shipping-label/reset",
   body?: unknown,
 ): Promise<Order> {
   const response = await fetch(buildCheckoutUrl(`/orders/${orderId}/${action}`), {
@@ -236,6 +237,10 @@ export function generateShippingLabel(
   warehouseId: string,
 ): Promise<Order> {
   return postOrderAction(orderId, "shipping-label", { warehouseId });
+}
+
+export function resetShippingLabel(orderId: string): Promise<Order> {
+  return postOrderAction(orderId, "shipping-label/reset");
 }
 
 export async function downloadShippingLabel(
