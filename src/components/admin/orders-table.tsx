@@ -118,6 +118,7 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     void runAction(orderId, "ship", {
+      warehouseId: labelWarehouseByOrder[orderId] ?? warehouses[0]?.id,
       carrier: (formData.get("carrier") as string) || undefined,
       trackingNumber: (formData.get("trackingNumber") as string) || undefined,
       labelUrl: (formData.get("labelUrl") as string) || undefined,
@@ -320,12 +321,30 @@ export function OrdersTable({ orders, warehouses }: OrdersTableProps) {
                           </div>
                         </div>
 
-                        {shipFormId === order.id && (
+                        {shipFormId === order.id && warehouses.length > 0 && (
                           <form
                             className="order-ship-form"
                             onSubmit={(event) => handleShipSubmit(event, order.id)}
                           >
-                            <input name="carrier" placeholder="Transportista (opcional)" />
+                            <select
+                              onChange={(event) =>
+                                setLabelWarehouseByOrder((prev) => ({
+                                  ...prev,
+                                  [order.id]: event.target.value,
+                                }))
+                              }
+                              value={labelWarehouseByOrder[order.id] ?? warehouses[0].id}
+                            >
+                              {warehouses.map((warehouse) => (
+                                <option key={warehouse.id} value={warehouse.id}>
+                                  {warehouse.name}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              name="carrier"
+                              placeholder="Transportista (ej: Moto, Entrega en persona, Correo Argentino)"
+                            />
                             <input
                               name="trackingNumber"
                               placeholder="N° de seguimiento (opcional)"

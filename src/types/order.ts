@@ -77,6 +77,7 @@ export interface Order {
 }
 
 export interface MarkOrderShippedPayload {
+  warehouseId: string;
   carrier?: string;
   trackingNumber?: string;
   labelUrl?: string;
