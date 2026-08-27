@@ -5,22 +5,13 @@ import { Fragment, useState } from "react";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
-import type { AdminUser } from "@/types/admin-user";
 import type { Order, ShippingStatusValue } from "@/types/order";
 import type { Warehouse } from "@/types/warehouse";
 
 interface OrdersTableProps {
   orders: Order[];
   warehouses: Warehouse[];
-  admins: AdminUser[];
-}
-
-function adminLabel(admins: AdminUser[], adminId: string | null) {
-  if (!adminId) {
-    return "Sin asignar";
-  }
-  const admin = admins.find((item) => item.id === adminId);
-  return admin?.displayName ?? admin?.email ?? "Sin asignar";
+  dispatchers: string[];
 }
 
 const STATUS_LABELS: Record<Order["status"], string> = {
@@ -63,7 +54,7 @@ function ShippingStatusBadge({ status }: { status: ShippingStatusValue }) {
   );
 }
 
-export function OrdersTable({ orders, warehouses, admins }: OrdersTableProps) {
+export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [shipFormId, setShipFormId] = useState<string | null>(null);
@@ -97,7 +88,7 @@ export function OrdersTable({ orders, warehouses, admins }: OrdersTableProps) {
       | "shipping-label"
       | "shipping-label/reset"
       | "reserve-stock"
-      | "assign-admin",
+      | "assign-dispatcher",
     body?: unknown,
   ) {
     setLoadingId(orderId);
@@ -197,7 +188,7 @@ export function OrdersTable({ orders, warehouses, admins }: OrdersTableProps) {
                   <td>
                     <ShippingStatusBadge status={order.shippingStatus} />
                   </td>
-                  <td>{adminLabel(admins, order.assignedAdminId)}</td>
+                  <td>{order.assignedDispatcher ?? "Sin asignar"}</td>
                   <td>
                     <div className="admin-date">
                       <strong>{formatDateTime(order.createdAt)}</strong>
@@ -341,17 +332,17 @@ export function OrdersTable({ orders, warehouses, admins }: OrdersTableProps) {
                               <select
                                 disabled={isLoading}
                                 onChange={(event) =>
-                                  runAction(order.id, "assign-admin", {
-                                    adminUserId: event.target.value || null,
+                                  runAction(order.id, "assign-dispatcher", {
+                                    dispatcher: event.target.value || null,
                                   })
                                 }
                                 onClick={(event) => event.stopPropagation()}
-                                value={order.assignedAdminId ?? ""}
+                                value={order.assignedDispatcher ?? ""}
                               >
                                 <option value="">Sin asignar</option>
-                                {admins.map((admin) => (
-                                  <option key={admin.id} value={admin.id}>
-                                    {admin.displayName ?? admin.email ?? admin.id.slice(0, 8)}
+                                {dispatchers.map((dispatcher) => (
+                                  <option key={dispatcher} value={dispatcher}>
+                                    {dispatcher}
                                   </option>
                                 ))}
                               </select>

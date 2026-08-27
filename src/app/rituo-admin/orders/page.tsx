@@ -7,12 +7,11 @@ import { ManualOrderForm } from "@/components/admin/manual-order-form";
 import { OrdersTable } from "@/components/admin/orders-table";
 import { formatCurrency } from "@/lib/format-currency";
 import {
-  listAdmins,
+  listDispatchers,
   listOrders,
   listProducts,
   listWarehouses,
 } from "@/services/checkout-api";
-import type { AdminUser } from "@/types/admin-user";
 import type { Order, OrderStatusValue } from "@/types/order";
 import type { ProductCommerce } from "@/types/product";
 import type { Warehouse } from "@/types/warehouse";
@@ -51,7 +50,7 @@ export default async function RituoAdminOrdersPage({
   let orders: Order[] = [];
   let warehouses: Warehouse[] = [];
   let products: ProductCommerce[] = [];
-  let admins: AdminUser[] = [];
+  let dispatchers: string[] = [];
   let errorMessage: string | null = null;
 
   try {
@@ -74,9 +73,9 @@ export default async function RituoAdminOrdersPage({
   }
 
   try {
-    admins = await listAdmins();
+    dispatchers = await listDispatchers();
   } catch {
-    admins = [];
+    dispatchers = [];
   }
 
   const approvedOrders = orders.filter((order) => order.status === "approved");
@@ -149,7 +148,11 @@ export default async function RituoAdminOrdersPage({
               <p>{errorMessage}</p>
             </div>
           ) : (
-            <OrdersTable orders={orders} warehouses={warehouses} admins={admins} />
+            <OrdersTable
+              orders={orders}
+              warehouses={warehouses}
+              dispatchers={dispatchers}
+            />
           )}
         </section>
       </section>

@@ -17,7 +17,6 @@ import type {
   RestockPayload,
 } from "@/types/inventory";
 import type { CreateWarehousePayload, Warehouse } from "@/types/warehouse";
-import type { AdminUser } from "@/types/admin-user";
 
 const DEFAULT_CHECKOUT_API_URL = "http://localhost:3001";
 
@@ -175,7 +174,7 @@ async function postOrderAction(
     | "shipping-label"
     | "shipping-label/reset"
     | "reserve-stock"
-    | "assign-admin",
+    | "assign-dispatcher",
   body?: unknown,
 ): Promise<Order> {
   const response = await fetch(buildCheckoutUrl(`/orders/${orderId}/${action}`), {
@@ -253,8 +252,8 @@ export function reserveOrderStock(
   return postOrderAction(orderId, "reserve-stock", { warehouseId });
 }
 
-export async function listAdmins(): Promise<AdminUser[]> {
-  const response = await fetch(buildCheckoutUrl("/orders/admins"), {
+export async function listDispatchers(): Promise<string[]> {
+  const response = await fetch(buildCheckoutUrl("/orders/dispatchers"), {
     headers: {
       Accept: "application/json",
       "x-internal-api-key": getInternalApiKey(),
@@ -265,17 +264,17 @@ export async function listAdmins(): Promise<AdminUser[]> {
   const data = await parseJson(response);
 
   if (!response.ok) {
-    throw new Error(`No pudimos cargar los admins (${response.status})`);
+    throw new Error(`No pudimos cargar los responsables (${response.status})`);
   }
 
-  return data as AdminUser[];
+  return data as string[];
 }
 
-export function assignOrderAdmin(
+export function assignOrderDispatcher(
   orderId: string,
-  adminUserId: string | null,
+  dispatcher: string | null,
 ): Promise<Order> {
-  return postOrderAction(orderId, "assign-admin", { adminUserId });
+  return postOrderAction(orderId, "assign-dispatcher", { dispatcher });
 }
 
 export async function downloadShippingLabel(
