@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title: "rituo — Volvé al presente.",
   description:
     "rituo convierte el impulso de abrir una app en una decisión consciente, agregando un pequeño ritual entre vos y las distracciones.",
+  other: {
+    "facebook-domain-verification": "flmoprmoci0pucm9vfjvb4kkxupz1s",
+  },
 };
 
 export default function RootLayout({
