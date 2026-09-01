@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { shippingLabels, shippingPrices } from "@/lib/shipping";
@@ -14,6 +14,22 @@ interface CheckoutFormProps {
 }
 
 const SHIPPING_METHODS: ShippingMethod[] = ["standard"];
+
+function readCookie(name: string): string | null {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${name}=([^;]*)`),
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/** Si Meta no seteó _fbc pero la URL trae fbclid (llegada desde un anuncio), lo armamos a mano. */
+function readOrBuildFbc(): string | null {
+  const existing = readCookie("_fbc");
+  if (existing) return existing;
+
+  const fbclid = new URLSearchParams(window.location.search).get("fbclid");
+  return fbclid ? `fb.1.${Date.now()}.${fbclid}` : null;
+}
 
 export function CheckoutForm({ product }: CheckoutFormProps) {
   const [quantity, setQuantity] = useState(1);
@@ -32,6 +48,17 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
     () => subtotal + shippingPrice,
     [shippingPrice, subtotal],
   );
+
+  useEffect(() => {
+    window.fbq?.("track", "ViewContent", {
+      content_ids: [product.sku],
+      content_type: "product",
+      content_name: product.name,
+      value: product.price,
+      currency: product.currency,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -77,6 +104,10 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
             }
           : {}),
       },
+      tracking: {
+        fbp: readCookie("_fbp"),
+        fbc: readOrBuildFbc(),
+      },
     };
 
     let response: Response;
@@ -99,11 +130,12 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
     }
 
     const data = (await response.json().catch(() => ({}))) as {
+      orderId?: string;
       initPoint?: string;
       message?: string;
     };
 
-    if (!response.ok || !data.initPoint) {
+    if (!response.ok || !data.initPoint || !data.orderId) {
       // Respuesta definitiva (validación/negocio): el próximo intento es un
       // pedido lógicamente distinto, así que renovamos la idempotency key.
       setIdempotencyKey(crypto.randomUUID());
@@ -111,6 +143,18 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
       setIsSubmitting(false);
       return;
     }
+
+    window.fbq?.(
+      "track",
+      "InitiateCheckout",
+      {
+        content_ids: [product.sku],
+        content_type: "product",
+        value: total,
+        currency: product.currency,
+      },
+      { eventID: data.orderId },
+    );
 
     window.location.href = data.initPoint;
   }

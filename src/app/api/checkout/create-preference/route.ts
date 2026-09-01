@@ -77,6 +77,8 @@ function parsePayload(
     }
   }
 
+  const tracking = body.tracking;
+
   return {
     productSlug: body.productSlug.trim(),
     quantity: body.quantity,
@@ -103,6 +105,10 @@ function parsePayload(
       isBusinessPurchase: billing.isBusinessPurchase,
       cuit: billing.cuit?.trim(),
       businessName: billing.businessName?.trim(),
+    },
+    tracking: {
+      fbp: typeof tracking?.fbp === "string" ? tracking.fbp : null,
+      fbc: typeof tracking?.fbc === "string" ? tracking.fbc : null,
     },
   };
 }
@@ -133,8 +139,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const clientIpAddress =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const clientUserAgent = request.headers.get("user-agent") ?? null;
+
+  const payloadWithClient: CheckoutRequestPayload = {
+    ...payload,
+    tracking: {
+      ...payload.tracking,
+      fbp: payload.tracking?.fbp ?? null,
+      fbc: payload.tracking?.fbc ?? null,
+      clientIpAddress,
+      clientUserAgent,
+    },
+  };
+
   try {
-    const result = await createOrder(payload, idempotencyKey);
+    const result = await createOrder(payloadWithClient, idempotencyKey);
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("No pudimos crear la orden", error);

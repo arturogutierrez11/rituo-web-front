@@ -26,6 +26,13 @@ export interface CheckoutBilling {
   businessName?: string;
 }
 
+export interface CheckoutTracking {
+  fbp: string | null;
+  fbc: string | null;
+  clientIpAddress?: string | null;
+  clientUserAgent?: string | null;
+}
+
 export interface CheckoutRequestPayload {
   productSlug: string;
   quantity: number;
@@ -33,4 +40,5 @@ export interface CheckoutRequestPayload {
   customer: CheckoutCustomer;
   shippingAddress: CheckoutAddress;
   billing: CheckoutBilling;
+  tracking?: CheckoutTracking;
 }
