@@ -203,9 +203,16 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                           <div>
                             <span>Envío</span>
                             <p>
-                              {order.shippingAddress}, {order.shippingCity},{" "}
-                              {order.shippingProvince} ({order.shippingPostalCode})
+                              {order.shippingAddress}
+                              {order.shippingFloor && `, Piso ${order.shippingFloor}`}
+                              {order.shippingApartment &&
+                                `, Depto ${order.shippingApartment}`}
+                              , {order.shippingCity}, {order.shippingProvince} (
+                              {order.shippingPostalCode})
                             </p>
+                            {order.shippingNotes && (
+                              <p>Observaciones: {order.shippingNotes}</p>
+                            )}
                             {/* <p>
                               {order.shippingMethod === "express"
                                 ? "Envío express"

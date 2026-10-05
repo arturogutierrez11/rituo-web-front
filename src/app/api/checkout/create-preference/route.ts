@@ -13,6 +13,19 @@ function isNonEmptyString(value: unknown, maxLength: number): value is string {
   );
 }
 
+function isOptionalString(value: unknown, maxLength: number): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === "string" && value.trim().length <= maxLength)
+  );
+}
+
+function trimmedOrUndefined(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 function parsePayload(
   body: Partial<CheckoutRequestPayload>,
 ): CheckoutRequestPayload | null {
@@ -51,6 +64,13 @@ function parsePayload(
     !isNonEmptyString(address.city, 80) ||
     !isNonEmptyString(address.province, 80) ||
     !isNonEmptyString(address.postalCode, 12)
+  ) {
+    return null;
+  }
+  if (
+    !isOptionalString(address.floor, 20) ||
+    !isOptionalString(address.apartment, 20) ||
+    !isOptionalString(address.notes, 300)
   ) {
     return null;
   }
@@ -94,6 +114,9 @@ function parsePayload(
       city: address.city.trim(),
       province: address.province.trim(),
       postalCode: address.postalCode.trim(),
+      floor: trimmedOrUndefined(address.floor),
+      apartment: trimmedOrUndefined(address.apartment),
+      notes: trimmedOrUndefined(address.notes),
     },
     billing: {
       dni: billing.dni.trim(),

@@ -84,6 +84,9 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
         city: formData.get("city"),
         province: formData.get("province"),
         postalCode: formData.get("postalCode"),
+        floor: formData.get("floor"),
+        apartment: formData.get("apartment"),
+        notes: formData.get("notes"),
       },
       billing: {
         dni: formData.get("dni"),
@@ -250,6 +253,26 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
                   required
                 />
               </div>
+              <div className="co-row-2">
+                <div className="co-field">
+                  <label className="co-label">Piso (opcional)</label>
+                  <input
+                    className="co-input"
+                    maxLength={20}
+                    name="floor"
+                    placeholder="6"
+                  />
+                </div>
+                <div className="co-field">
+                  <label className="co-label">Departamento (opcional)</label>
+                  <input
+                    className="co-input"
+                    maxLength={20}
+                    name="apartment"
+                    placeholder="A"
+                  />
+                </div>
+              </div>
               <div className="co-row-3">
                 <div className="co-field">
                   <label className="co-label">Ciudad</label>
@@ -281,6 +304,16 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
                     required
                   />
                 </div>
+              </div>
+              <div className="co-field">
+                <label className="co-label">Observaciones (opcional)</label>
+                <textarea
+                  className="co-input"
+                  maxLength={300}
+                  name="notes"
+                  placeholder="Entre calles, timbre, horario para recibir, etc."
+                  rows={2}
+                />
               </div>
             </fieldset>
 

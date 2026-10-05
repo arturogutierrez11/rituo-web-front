@@ -12,6 +12,9 @@ export interface CheckoutAddress {
   city: string;
   province: string;
   postalCode: string;
+  floor?: string;
+  apartment?: string;
+  notes?: string;
 }
 
 export interface CheckoutBilling {

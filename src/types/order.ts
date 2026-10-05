@@ -37,6 +37,9 @@ export interface Order {
   shippingCity: string;
   shippingProvince: string;
   shippingPostalCode: string;
+  shippingFloor: string | null;
+  shippingApartment: string | null;
+  shippingNotes: string | null;
 
   billingDni: string;
   billingUseShippingAddress: boolean;
