@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 
+import { Clarity } from "@/components/analytics/clarity";
 import { MetaPixel } from "@/components/analytics/meta-pixel";
 
 import "./globals.css";
@@ -30,6 +31,7 @@ export default function RootLayout({
     <html lang="es">
       <head>
         <MetaPixel />
+        <Clarity />
       </head>
       <body className={manrope.variable}>
         {children}

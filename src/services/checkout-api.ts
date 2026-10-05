@@ -3,6 +3,7 @@ import "server-only";
 import type { ProductCommerce } from "@/types/product";
 import type { CheckoutRequestPayload, PaymentMethod } from "@/types/checkout";
 import type {
+  BankTransferDetails,
   CreateManualOrderPayload,
   MarkOrderShippedPayload,
   Order,
@@ -121,6 +122,28 @@ export async function createManualOrder(
   }
 
   return data as Order;
+}
+
+export async function getBankTransferDetails(): Promise<BankTransferDetails> {
+  const response = await fetch(buildCheckoutUrl("/orders/bank-transfer-details"), {
+    headers: {
+      Accept: "application/json",
+      "x-internal-api-key": getInternalApiKey(),
+    },
+    cache: "no-store",
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    const message =
+      data && typeof data === "object" && "message" in data
+        ? String((data as { message: unknown }).message)
+        : `No pudimos cargar los datos para transferir (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data as BankTransferDetails;
 }
 
 export async function getOrder(orderId: string): Promise<Order | null> {

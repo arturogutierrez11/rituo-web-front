@@ -3097,3 +3097,33 @@ main { position: relative; z-index: 1; }
   overflow-wrap: anywhere;
   user-select: all;
 }
+
+.co-bank {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--line, #e4e9f0);
+  border-radius: 14px;
+  background: var(--paper-dim, #f6f8fb);
+}
+.co-bank div { display: flex; justify-content: space-between; gap: 16px; }
+.co-bank dt { color: var(--text-faint); font-size: 13px; }
+.co-bank dd {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.co-transfer .co-back { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
+.co-transfer .co-submit { width: 100%; margin-top: 20px; }
+
+.button-link--whatsapp {
+  background: #25d366;
+  color: #06361a !important;
+  box-shadow: 0 12px 32px rgba(37, 211, 102, 0.22);
+}
+.button-link--whatsapp:hover { background: #3be07a; }

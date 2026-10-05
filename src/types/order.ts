@@ -12,6 +12,14 @@ export type ShippingStatusValue =
   | "delivered"
   | "cancelled";
 
+export interface BankTransferDetails {
+  holder: string | null;
+  bank: string | null;
+  cuit: string | null;
+  cbu: string | null;
+  alias: string | null;
+}
+
 export interface Order {
   id: string;
 
@@ -59,13 +67,7 @@ export interface Order {
 
   salesChannel: "mercadopago" | "manual" | "bank_transfer";
   /** Datos para transferir — solo viene en órdenes por transferencia. */
-  bankTransfer: {
-    holder: string | null;
-    bank: string | null;
-    cuit: string | null;
-    cbu: string | null;
-    alias: string | null;
-  } | null;
+  bankTransfer: BankTransferDetails | null;
   manualPaymentMethod: string | null;
   manualPaymentNote: string | null;
 

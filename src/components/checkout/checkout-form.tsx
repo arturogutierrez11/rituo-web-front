@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { discountFor } from "@/lib/payment";
 import { shippingLabels, shippingPrices } from "@/lib/shipping";
 import type { PaymentMethod, ShippingMethod } from "@/types/checkout";
+import type { BankTransferDetails } from "@/types/order";
 import type { Product } from "@/types/product";
 
 interface CheckoutFormProps {
@@ -41,6 +42,11 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
   const [isBusinessPurchase, setIsBusinessPurchase] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Non-null while showing the "transfer now" step; the order doesn't exist
+  // yet — it's created when the customer says they already transferred.
+  const [transferDetails, setTransferDetails] =
+    useState<BankTransferDetails | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [idempotencyKey, setIdempotencyKey] = useState(() =>
     crypto.randomUUID(),
   );
@@ -68,7 +74,47 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
     event.preventDefault();
     setErrorMessage(null);
 
-    const form = event.currentTarget;
+    if (paymentMethod === "bank_transfer") {
+      await showTransferInstructions();
+      return;
+    }
+
+    await submitOrder(event.currentTarget);
+  }
+
+  async function showTransferInstructions() {
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/checkout/bank-transfer-details", {
+        cache: "no-store",
+      });
+      const data = (await response.json().catch(() => ({}))) as
+        | BankTransferDetails
+        | { message?: string };
+
+      if (!response.ok) {
+        setErrorMessage(
+          "message" in data && data.message
+            ? data.message
+            : "El pago por transferencia no está disponible por el momento.",
+        );
+        return;
+      }
+
+      setTransferDetails(data as BankTransferDetails);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      setErrorMessage(
+        "No pudimos conectar con el servidor. Probá de nuevo en unos segundos.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function submitOrder(form: HTMLFormElement) {
+    setErrorMessage(null);
     const formData = new FormData(form);
 
     setIsSubmitting(true);
@@ -189,15 +235,88 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
 
       <div className="co-grid">
         <section className="co-panel co-panel--form">
-          <Link className="co-back" href="/#producto">
-            ← Volver
-          </Link>
+          {transferDetails ? (
+            <div className="co-transfer">
+              <button
+                className="co-back"
+                onClick={() => {
+                  setErrorMessage(null);
+                  setTransferDetails(null);
+                }}
+                type="button"
+              >
+                ← Editar mis datos
+              </button>
 
-          <p className="co-eyebrow">Finalizá tu compra</p>
-          <h1 className="co-title">Tu rituo está más cerca.</h1>
-          <p className="co-subtitle">Completá tus datos para coordinar el envío.</p>
+              <p className="co-eyebrow">Transferencia bancaria</p>
+              <h1 className="co-title">
+                Transferí {formatCurrency(total, product.currency)}
+              </h1>
+              <p className="co-subtitle">
+                Ya incluye el 10% de descuento. Hacé la transferencia a la
+                cuenta de abajo y, cuando termines, tocá el botón para generar
+                tu pedido.
+              </p>
 
-          <form className="co-form" onSubmit={handleSubmit}>
+              <dl className="co-bank">
+                {[
+                  ["Titular", transferDetails.holder],
+                  ["CUIT/CUIL", transferDetails.cuit],
+                  ["Banco", transferDetails.bank],
+                  ["CBU", transferDetails.cbu],
+                  ["Alias", transferDetails.alias],
+                ]
+                  .filter(([, value]) => value)
+                  .map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+              </dl>
+
+              <p className="co-payment-note">
+                Si tu banco te deja, poné tu nombre o DNI en el concepto. Después
+                del pedido te mandamos un email: respondelo con el comprobante
+                para acelerar la confirmación.
+              </p>
+
+              <button
+                className="rt-btn rt-btn--primary co-submit"
+                disabled={isSubmitting}
+                onClick={() => {
+                  if (formRef.current) void submitOrder(formRef.current);
+                }}
+                type="button"
+              >
+                {isSubmitting ? "Generando tu pedido…" : "Ya realicé la transferencia"}
+              </button>
+
+              {errorMessage && (
+                <p className="co-notice co-notice--error" role="alert">
+                  {errorMessage}
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link className="co-back" href="/#producto">
+                ← Volver
+              </Link>
+
+              <p className="co-eyebrow">Finalizá tu compra</p>
+              <h1 className="co-title">Tu rituo está más cerca.</h1>
+              <p className="co-subtitle">Completá tus datos para coordinar el envío.</p>
+            </>
+          )}
+
+          <form
+            className="co-form"
+            data-clarity-mask="True"
+            onSubmit={handleSubmit}
+            ref={formRef}
+            style={transferDetails ? { display: "none" } : undefined}
+          >
             <fieldset className="co-section">
               <div className="co-section__head">
                 <span className="co-step">01</span>
@@ -497,7 +616,7 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
               <p className="co-payment-note">
                 {paymentMethod === "mercadopago"
                   ? "En el siguiente paso vas a elegir cómo pagar de forma segura con Mercado Pago."
-                  : "Al continuar te mostramos los datos para transferir. Tu pedido queda reservado y lo confirmamos apenas se acredite el pago."}
+                  : "Al continuar te mostramos los datos para transferir. El pedido se genera cuando nos avisás que ya hiciste la transferencia."}
               </p>
             </fieldset>
 
@@ -505,10 +624,8 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
               {isSubmitting
                 ? paymentMethod === "mercadopago"
                   ? "Redirigiendo a Mercado Pago…"
-                  : "Generando tu pedido…"
-                : paymentMethod === "mercadopago"
-                  ? "Continuar al pago →"
-                  : "Confirmar pedido →"}
+                  : "Cargando datos…"
+                : "Continuar al pago →"}
             </button>
 
             {errorMessage && (
