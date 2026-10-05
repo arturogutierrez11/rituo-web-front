@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import { formatCurrency } from "@/lib/format-currency";
+import { CopyButton } from "@/components/ui/copy-button";
 import { discountFor } from "@/lib/payment";
 import { shippingLabels, shippingPrices } from "@/lib/shipping";
 import type { PaymentMethod, ShippingMethod } from "@/types/checkout";
@@ -270,7 +271,12 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
                   .map(([label, value]) => (
                     <div key={label}>
                       <dt>{label}</dt>
-                      <dd>{value}</dd>
+                      <dd>
+                        {value}
+                        {(label === "Alias" || label === "CBU") && (
+                          <CopyButton label={label as string} value={value as string} />
+                        )}
+                      </dd>
                     </div>
                   ))}
               </dl>

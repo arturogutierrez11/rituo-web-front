@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 
 import { Clarity } from "@/components/analytics/clarity";
 import { MetaPixel } from "@/components/analytics/meta-pixel";
+import { WhatsAppFloat } from "@/components/ui/whatsapp-float";
 
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({
       </head>
       <body className={manrope.variable}>
         {children}
+        <WhatsAppFloat />
         <Analytics />
       </body>
     </html>
