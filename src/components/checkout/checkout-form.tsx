@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { formatCurrency } from "@/lib/format-currency";
+import { discountFor } from "@/lib/payment";
 import { shippingLabels, shippingPrices } from "@/lib/shipping";
-import type { ShippingMethod } from "@/types/checkout";
+import type { PaymentMethod, ShippingMethod } from "@/types/checkout";
 import type { Product } from "@/types/product";
 
 interface CheckoutFormProps {
@@ -34,6 +35,8 @@ function readOrBuildFbc(): string | null {
 export function CheckoutForm({ product }: CheckoutFormProps) {
   const [quantity, setQuantity] = useState(1);
   const [shipping, setShipping] = useState<ShippingMethod>("standard");
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("mercadopago");
   const [useShippingAsBilling, setUseShippingAsBilling] = useState(true);
   const [isBusinessPurchase, setIsBusinessPurchase] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,9 +47,10 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
 
   const subtotal = product.price * quantity;
   const shippingPrice = shippingPrices[shipping];
+  const discount = discountFor(paymentMethod, subtotal);
   const total = useMemo(
-    () => subtotal + shippingPrice,
-    [shippingPrice, subtotal],
+    () => subtotal - discount + shippingPrice,
+    [discount, shippingPrice, subtotal],
   );
 
   useEffect(() => {
@@ -73,6 +77,7 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
       productSlug: product.slug,
       quantity,
       shippingMethod: shipping,
+      paymentMethod,
       customer: {
         firstName: formData.get("firstName"),
         lastName: formData.get("lastName"),
@@ -138,7 +143,13 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
       message?: string;
     };
 
-    if (!response.ok || !data.initPoint || !data.orderId) {
+    const redirectsToMercadoPago = paymentMethod === "mercadopago";
+
+    if (
+      !response.ok ||
+      !data.orderId ||
+      (redirectsToMercadoPago && !data.initPoint)
+    ) {
       // Respuesta definitiva (validación/negocio): el próximo intento es un
       // pedido lógicamente distinto, así que renovamos la idempotency key.
       setIdempotencyKey(crypto.randomUUID());
@@ -159,7 +170,9 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
       { eventID: data.orderId },
     );
 
-    window.location.href = data.initPoint;
+    window.location.href = redirectsToMercadoPago
+      ? (data.initPoint as string)
+      : `/checkout/transfer?order=${data.orderId}`;
   }
 
   return (
@@ -448,14 +461,54 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
                 <span className="co-step">05</span>
                 <h2>Medio de pago</h2>
               </div>
+              <div className="co-shipping">
+                <label
+                  className={`co-shipping-row${paymentMethod === "mercadopago" ? " is-selected" : ""}`}
+                >
+                  <input
+                    checked={paymentMethod === "mercadopago"}
+                    name="paymentMethod"
+                    onChange={() => setPaymentMethod("mercadopago")}
+                    type="radio"
+                    value="mercadopago"
+                  />
+                  <span className="co-shipping-row__text">
+                    <strong>Mercado Pago</strong>
+                    <small>Tarjeta, efectivo o dinero en cuenta, de forma segura.</small>
+                  </span>
+                </label>
+                <label
+                  className={`co-shipping-row${paymentMethod === "bank_transfer" ? " is-selected" : ""}`}
+                >
+                  <input
+                    checked={paymentMethod === "bank_transfer"}
+                    name="paymentMethod"
+                    onChange={() => setPaymentMethod("bank_transfer")}
+                    type="radio"
+                    value="bank_transfer"
+                  />
+                  <span className="co-shipping-row__text">
+                    <strong>Transferencia bancaria</strong>
+                    <small>Te pasamos los datos y confirmamos cuando se acredita.</small>
+                  </span>
+                  <span className="co-shipping-row__price">10% OFF</span>
+                </label>
+              </div>
               <p className="co-payment-note">
-                En el siguiente paso vas a elegir cómo pagar (tarjeta, efectivo o
-                transferencia) de forma segura con Mercado Pago.
+                {paymentMethod === "mercadopago"
+                  ? "En el siguiente paso vas a elegir cómo pagar de forma segura con Mercado Pago."
+                  : "Al continuar te mostramos los datos para transferir. Tu pedido queda reservado y lo confirmamos apenas se acredite el pago."}
               </p>
             </fieldset>
 
             <button className="rt-btn rt-btn--primary co-submit" disabled={isSubmitting} type="submit">
-              {isSubmitting ? "Redirigiendo a Mercado Pago…" : "Continuar al pago →"}
+              {isSubmitting
+                ? paymentMethod === "mercadopago"
+                  ? "Redirigiendo a Mercado Pago…"
+                  : "Generando tu pedido…"
+                : paymentMethod === "mercadopago"
+                  ? "Continuar al pago →"
+                  : "Confirmar pedido →"}
             </button>
 
             {errorMessage && (
@@ -510,6 +563,12 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
               <dt>Subtotal</dt>
               <dd>{formatCurrency(subtotal, product.currency)}</dd>
             </div>
+            {discount > 0 && (
+              <div>
+                <dt>Descuento por transferencia (10%)</dt>
+                <dd>−{formatCurrency(discount, product.currency)}</dd>
+              </div>
+            )}
             <div>
               <dt>Envío</dt>
               <dd>{shippingPrice === 0 ? "Gratis" : formatCurrency(shippingPrice, product.currency)}</dd>

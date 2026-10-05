@@ -44,6 +44,14 @@ function parsePayload(
     return null;
   }
 
+  if (
+    body.paymentMethod !== undefined &&
+    body.paymentMethod !== "mercadopago" &&
+    body.paymentMethod !== "bank_transfer"
+  ) {
+    return null;
+  }
+
   const customer = body.customer;
   if (
     !customer ||
@@ -103,6 +111,7 @@ function parsePayload(
     productSlug: body.productSlug.trim(),
     quantity: body.quantity,
     shippingMethod: body.shippingMethod,
+    paymentMethod: body.paymentMethod ?? "mercadopago",
     customer: {
       firstName: customer.firstName.trim(),
       lastName: customer.lastName.trim(),

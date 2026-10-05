@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { ProductCommerce } from "@/types/product";
-import type { CheckoutRequestPayload } from "@/types/checkout";
+import type { CheckoutRequestPayload, PaymentMethod } from "@/types/checkout";
 import type {
   CreateManualOrderPayload,
   MarkOrderShippedPayload,
@@ -62,7 +62,9 @@ export async function listProducts(): Promise<ProductCommerce[]> {
 
 export interface CreateOrderResult {
   orderId: string;
-  initPoint: string;
+  paymentMethod: PaymentMethod;
+  /** Null en pagos por transferencia: no hay checkout externo al que redirigir. */
+  initPoint: string | null;
 }
 
 export async function createOrder(
@@ -166,6 +168,7 @@ async function postOrderAction(
   orderId: string,
   action:
     | "cancel"
+    | "confirm-transfer"
     | "ship"
     | "resync"
     | "shipping-status"
@@ -203,6 +206,10 @@ async function postOrderAction(
 
 export function cancelOrder(orderId: string): Promise<Order> {
   return postOrderAction(orderId, "cancel");
+}
+
+export function confirmBankTransfer(orderId: string): Promise<Order> {
+  return postOrderAction(orderId, "confirm-transfer");
 }
 
 export function markOrderShipped(

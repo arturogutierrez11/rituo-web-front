@@ -1,5 +1,7 @@
 export type ShippingMethod = "standard" ;
 
+export type PaymentMethod = "mercadopago" | "bank_transfer";
+
 export interface CheckoutCustomer {
   firstName: string;
   lastName: string;
@@ -40,6 +42,7 @@ export interface CheckoutRequestPayload {
   productSlug: string;
   quantity: number;
   shippingMethod: ShippingMethod;
+  paymentMethod?: PaymentMethod;
   customer: CheckoutCustomer;
   shippingAddress: CheckoutAddress;
   billing: CheckoutBilling;

@@ -3072,3 +3072,28 @@ main { position: relative; z-index: 1; }
 @media (max-width: 480px) {
   .rs-row-cta { width: 100%; text-align: left !important; }
 }
+
+.transfer-details {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 22px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  text-align: left;
+}
+.transfer-details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.transfer-details dt { color: var(--muted); font-size: 0.8rem; }
+.transfer-details dd {
+  margin: 0;
+  color: var(--text-strong, inherit);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+  user-select: all;
+}

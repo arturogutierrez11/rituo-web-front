@@ -24,6 +24,7 @@ export interface Order {
 
   shippingMethod: string;
   shippingPrice: number;
+  discountAmount: number;
   total: number;
 
   status: OrderStatusValue;
@@ -56,7 +57,15 @@ export interface Order {
   mpPaymentStatus: string | null;
   mpPaymentStatusDetail: string | null;
 
-  salesChannel: "mercadopago" | "manual";
+  salesChannel: "mercadopago" | "manual" | "bank_transfer";
+  /** Datos para transferir — solo viene en órdenes por transferencia. */
+  bankTransfer: {
+    holder: string | null;
+    bank: string | null;
+    cuit: string | null;
+    cbu: string | null;
+    alias: string | null;
+  } | null;
   manualPaymentMethod: string | null;
   manualPaymentNote: string | null;
 

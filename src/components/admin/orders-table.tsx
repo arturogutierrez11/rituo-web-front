@@ -80,6 +80,7 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
     orderId: string,
     action:
       | "cancel"
+      | "confirm-transfer"
       | "ship"
       | "resync"
       | "shipping-status"
@@ -234,11 +235,26 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                               </p>
                             )}
                           </div>
-                          <div>
-                            <span>Mercado Pago</span>
-                            <p>Pago: {order.mpPaymentId ?? "—"}</p>
-                            <p>Estado MP: {order.mpPaymentStatus ?? "—"}</p>
-                          </div>
+                          {order.salesChannel === "bank_transfer" ? (
+                            <div>
+                              <span>Transferencia bancaria</span>
+                              <p>
+                                {order.status === "pending"
+                                  ? "Esperando acreditación"
+                                  : "Acreditada"}
+                              </p>
+                              <p>
+                                Descuento:{" "}
+                                {formatCurrency(order.discountAmount, order.currency)}
+                              </p>
+                            </div>
+                          ) : (
+                            <div>
+                              <span>Mercado Pago</span>
+                              <p>Pago: {order.mpPaymentId ?? "—"}</p>
+                              <p>Estado MP: {order.mpPaymentStatus ?? "—"}</p>
+                            </div>
+                          )}
                           <div>
                             <span>Detalle de envío</span>
                             {order.shippingZipnovaShipmentId ? (
@@ -481,6 +497,25 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                               {isLoading ? "Reiniciando…" : "Reintentar etiqueta"}
                             </button>
                           )}
+                          {order.status === "pending" &&
+                            order.salesChannel === "bank_transfer" && (
+                              <button
+                                className="order-action"
+                                disabled={isLoading}
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      `¿Confirmás que la transferencia de ${formatCurrency(order.total, order.currency)} ya se acreditó? Se aprueba la orden y se le manda el mail de confirmación al cliente.`,
+                                    )
+                                  ) {
+                                    void runAction(order.id, "confirm-transfer");
+                                  }
+                                }}
+                                type="button"
+                              >
+                                {isLoading ? "Confirmando…" : "Confirmar transferencia"}
+                              </button>
+                            )}
                           {order.status === "pending" && (
                             <button
                               className="order-action order-action--danger"
@@ -491,14 +526,16 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                               Cancelar orden
                             </button>
                           )}
-                          <button
-                            className="order-action"
-                            disabled={isLoading}
-                            onClick={() => runAction(order.id, "resync")}
-                            type="button"
-                          >
-                            {isLoading ? "Verificando…" : "Verificar pago con MP"}
-                          </button>
+                          {order.salesChannel !== "bank_transfer" && (
+                            <button
+                              className="order-action"
+                              disabled={isLoading}
+                              onClick={() => runAction(order.id, "resync")}
+                              type="button"
+                            >
+                              {isLoading ? "Verificando…" : "Verificar pago con MP"}
+                            </button>
+                          )}
                           {order.status === "approved" && (
                             <button
                               className="order-action"
