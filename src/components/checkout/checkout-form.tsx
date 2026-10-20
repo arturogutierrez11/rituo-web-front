@@ -6,7 +6,11 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { CopyButton } from "@/components/ui/copy-button";
-import { discountFor } from "@/lib/payment";
+import {
+  comboDiscountFor,
+  comboDiscountRate,
+  transferDiscountFor,
+} from "@/lib/payment";
 import { shippingLabels, shippingPrices } from "@/lib/shipping";
 import type { PaymentMethod, ShippingMethod } from "@/types/checkout";
 import type { BankTransferDetails } from "@/types/order";
@@ -14,6 +18,7 @@ import type { Product } from "@/types/product";
 
 interface CheckoutFormProps {
   product: Product;
+  initialQuantity?: number;
 }
 
 const SHIPPING_METHODS: ShippingMethod[] = ["standard"];
@@ -34,8 +39,11 @@ function readOrBuildFbc(): string | null {
   return fbclid ? `fb.1.${Date.now()}.${fbclid}` : null;
 }
 
-export function CheckoutForm({ product }: CheckoutFormProps) {
-  const [quantity, setQuantity] = useState(1);
+export function CheckoutForm({
+  product,
+  initialQuantity = 1,
+}: CheckoutFormProps) {
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [shipping, setShipping] = useState<ShippingMethod>("standard");
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("mercadopago");
@@ -54,10 +62,11 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
 
   const subtotal = product.price * quantity;
   const shippingPrice = shippingPrices[shipping];
-  const discount = discountFor(paymentMethod, subtotal);
+  const comboDiscount = comboDiscountFor(subtotal, quantity);
+  const transferDiscount = transferDiscountFor(paymentMethod, subtotal);
   const total = useMemo(
-    () => subtotal - discount + shippingPrice,
-    [discount, shippingPrice, subtotal],
+    () => subtotal - comboDiscount - transferDiscount + shippingPrice,
+    [comboDiscount, shippingPrice, subtotal, transferDiscount],
   );
 
   useEffect(() => {
@@ -254,7 +263,7 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
                 Transferí {formatCurrency(total, product.currency)}
               </h1>
               <p className="co-subtitle">
-                Ya incluye el 10% de descuento. Hacé la transferencia a la
+                Ya incluye tus descuentos. Hacé la transferencia a la
                 cuenta de abajo y, cuando termines, tocá el botón para generar
                 tu pedido.
               </p>
@@ -686,10 +695,18 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
               <dt>Subtotal</dt>
               <dd>{formatCurrency(subtotal, product.currency)}</dd>
             </div>
-            {discount > 0 && (
+            {comboDiscount > 0 && (
+              <div>
+                <dt>
+                  Descuento por combo ({Math.round(comboDiscountRate(quantity) * 100)}%)
+                </dt>
+                <dd>−{formatCurrency(comboDiscount, product.currency)}</dd>
+              </div>
+            )}
+            {transferDiscount > 0 && (
               <div>
                 <dt>Descuento por transferencia (10%)</dt>
-                <dd>−{formatCurrency(discount, product.currency)}</dd>
+                <dd>−{formatCurrency(transferDiscount, product.currency)}</dd>
               </div>
             )}
             <div>

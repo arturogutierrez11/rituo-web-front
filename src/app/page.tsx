@@ -7,6 +7,7 @@ import { ModosRituales } from "@/components/redesign/modos-rituales";
 import { CardReveal } from "@/components/redesign/card-reveal";
 import { ComoFunciona } from "@/components/redesign/como-funciona";
 import { LifeSections } from "@/components/redesign/life-sections";
+import { Combos } from "@/components/redesign/combos";
 import { Producto } from "@/components/redesign/producto";
 import { Faq } from "@/components/redesign/faq";
 import { RtFooter } from "@/components/redesign/rt-footer";
@@ -28,6 +29,7 @@ export default function Home() {
       <ComoFunciona />
       <LifeSections />
       <Producto />
+      <Combos />
       <Faq />
       <RtFooter />
     </main>

@@ -61,7 +61,7 @@ export default async function CheckoutTransferPage({
         <p>
           {isConfirmed
             ? "Ya acreditamos tu pago. En breve nos contactamos para coordinar el envío."
-            : `Recibimos tu pedido por ${formatCurrency(order.total, order.currency)} (ya incluye el 10% de descuento). Mandanos el comprobante por WhatsApp (o respondiendo el email que te enviamos), indicando tu N° de orden, para acelerar la confirmación. Apenas acreditemos el pago, te confirmamos y coordinamos el envío.`}
+            : `Recibimos tu pedido por ${formatCurrency(order.total, order.currency)} (ya incluye tu descuento). Mandanos el comprobante por WhatsApp (o respondiendo el email que te enviamos), indicando tu N° de orden, para acelerar la confirmación. Apenas acreditemos el pago, te confirmamos y coordinamos el envío.`}
         </p>
 
         {!isConfirmed && (

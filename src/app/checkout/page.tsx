@@ -5,13 +5,13 @@ import { mergeProduct } from "@/lib/merge-products";
 import { listProducts } from "@/services/checkout-api";
 
 interface CheckoutPageProps {
-  searchParams: Promise<{ product?: string }>;
+  searchParams: Promise<{ product?: string; quantity?: string }>;
 }
 
 export default async function CheckoutPage({
   searchParams,
 }: CheckoutPageProps) {
-  const { product } = await searchParams;
+  const { product, quantity } = await searchParams;
 
   if (!product) {
     notFound();
@@ -24,5 +24,12 @@ export default async function CheckoutPage({
     notFound();
   }
 
-  return <CheckoutForm product={selectedProduct} />;
+  const parsedQuantity = Number.parseInt(quantity ?? "", 10);
+  const initialQuantity = Number.isInteger(parsedQuantity)
+    ? Math.min(Math.max(parsedQuantity, 1), 20)
+    : 1;
+
+  return (
+    <CheckoutForm initialQuantity={initialQuantity} product={selectedProduct} />
+  );
 }

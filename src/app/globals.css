@@ -3171,3 +3171,66 @@ main { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) {
   .wa-float, .copy-btn { transition: none; }
 }
+
+/* ── Combos ─────────────────────────────────────────────── */
+.rt-combos { background: var(--paper-dim, #f6f8fb); padding-top: 100px; padding-bottom: 100px; }
+.rt-combos__inner { max-width: 1180px; margin: 0 auto; text-align: center; }
+.rt-combos__eyebrow {
+  margin: 0 0 14px;
+  color: var(--text-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.rt-combos__title {
+  margin: 0 0 14px;
+  color: var(--text-strong);
+  font-size: clamp(30px, 3.6vw, 46px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+.rt-combos__lead { margin: 0 auto 48px; max-width: 520px; color: var(--text-body); font-size: 16px; line-height: 1.6; }
+.rt-combos__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  text-align: left;
+}
+.rt-combo-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 32px 28px 28px;
+  border: 1px solid var(--border-default, #e4e9f0);
+  border-radius: 22px;
+  background: var(--paper, #fff);
+}
+.rt-combo-card h3 { margin: 10px 0 0; color: var(--text-strong); font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.rt-combo-card__desc { margin: 0; min-height: 66px; color: var(--text-body); font-size: 15px; line-height: 1.55; }
+.rt-combo-card__badge {
+  align-self: flex-start;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: var(--white, #fff);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.rt-combo-card__badge--soft { background: var(--surface-raised, #eef1f6); color: var(--text-strong); }
+.rt-combo-card__price { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
+.rt-combo-card__price strong { color: var(--text-strong); font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
+.rt-combo-card__price s { color: var(--text-faint); font-size: 17px; }
+.rt-combo-card__unit { margin: 0 0 14px; color: var(--text-faint); font-size: 14px; }
+.rt-combo-card .rt-btn { margin-top: auto; justify-content: center; gap: 8px; }
+.rt-combos__note { margin: 32px 0 0; color: var(--text-faint); font-size: 14px; }
+@media (max-width: 900px) {
+  .rt-combos__grid { grid-template-columns: 1fr; max-width: 460px; margin-inline: auto; }
+  .rt-combo-card__desc { min-height: 0; }
+}
+@media (max-width: 640px) {
+  .rt-combos { padding-top: 72px; padding-bottom: 72px; }
+}
