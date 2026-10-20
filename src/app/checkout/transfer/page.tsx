@@ -5,10 +5,9 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { CopyButton } from "@/components/ui/copy-button";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { formatCurrency } from "@/lib/format-currency";
+import { WHATSAPP_URL } from "@/lib/whatsapp";
 import { getOrder } from "@/services/checkout-api";
 import type { Order } from "@/types/order";
-
-const WHATSAPP_PROOF_URL = "https://w.app/0qunme";
 
 interface CheckoutTransferPageProps {
   searchParams: Promise<{ order?: string }>;
@@ -86,7 +85,7 @@ export default async function CheckoutTransferPage({
         {!isConfirmed && (
           <ButtonLink
             className="button-link--whatsapp"
-            href={WHATSAPP_PROOF_URL}
+            href={WHATSAPP_URL}
             rel="noopener noreferrer"
             target="_blank"
           >
