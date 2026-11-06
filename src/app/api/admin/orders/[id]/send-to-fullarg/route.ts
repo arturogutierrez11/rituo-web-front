@@ -6,11 +6,18 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(_request: Request, { params }: RouteParams) {
+export async function POST(request: Request, { params }: RouteParams) {
   const { id } = await params;
+  const body = (await request.json().catch(() => ({}))) as {
+    shippingMethod?: unknown;
+  };
+  const shippingMethod =
+    typeof body.shippingMethod === "string" && body.shippingMethod.trim()
+      ? body.shippingMethod.trim()
+      : undefined;
 
   try {
-    return NextResponse.json(await sendOrderToFullarg(id));
+    return NextResponse.json(await sendOrderToFullarg(id, shippingMethod));
   } catch (error) {
     return NextResponse.json(
       {

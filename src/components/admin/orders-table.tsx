@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 
+import { FULLARG_SHIPPING_METHODS } from "@/data/fullarg-shipping-methods";
+
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
 import type { Order, ShippingStatusValue } from "@/types/order";
@@ -62,6 +64,9 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
   const [errorByOrder, setErrorByOrder] = useState<Record<string, string>>({});
   const [pendingShippingStatus, setPendingShippingStatus] = useState<
     Record<string, ShippingStatusValue>
+  >({});
+  const [fullargMethodByOrder, setFullargMethodByOrder] = useState<
+    Record<string, string>
   >({});
   const [labelWarehouseByOrder, setLabelWarehouseByOrder] = useState<
     Record<string, string>
@@ -492,22 +497,53 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                           {order.status === "approved" &&
                             !order.fullargSalesOrder &&
                             !order.shippingZipnovaShipmentId && (
-                              <button
-                                className="order-action"
-                                disabled={isLoading}
-                                onClick={() => {
-                                  if (
-                                    window.confirm(
-                                      "Se le envían a Fullarg los datos de esta orden para que la empaqueten y despachen. ¿Confirmás?",
-                                    )
-                                  ) {
-                                    void runAction(order.id, "send-to-fullarg");
+                              <div className="order-detail__label-picker">
+                                <select
+                                  aria-label="Operador logístico de Fullarg"
+                                  disabled={isLoading}
+                                  onChange={(event) =>
+                                    setFullargMethodByOrder((prev) => ({
+                                      ...prev,
+                                      [order.id]: event.target.value,
+                                    }))
                                   }
-                                }}
-                                type="button"
-                              >
-                                {isLoading ? "Enviando…" : "Enviar a Fullarg"}
-                              </button>
+                                  onClick={(event) => event.stopPropagation()}
+                                  value={fullargMethodByOrder[order.id] ?? ""}
+                                >
+                                  {FULLARG_SHIPPING_METHODS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  className="order-action"
+                                  disabled={isLoading}
+                                  onClick={() => {
+                                    const method =
+                                      fullargMethodByOrder[order.id] ?? "";
+                                    const methodLabel =
+                                      FULLARG_SHIPPING_METHODS.find(
+                                        (option) => option.value === method,
+                                      )?.label ?? "Que decida Fullarg";
+
+                                    if (
+                                      window.confirm(
+                                        `Se le envían a Fullarg los datos de esta orden para que la empaqueten y despachen.\n\nOperador: ${methodLabel}\n\n¿Confirmás?`,
+                                      )
+                                    ) {
+                                      void runAction(
+                                        order.id,
+                                        "send-to-fullarg",
+                                        method ? { shippingMethod: method } : {},
+                                      );
+                                    }
+                                  }}
+                                  type="button"
+                                >
+                                  {isLoading ? "Enviando…" : "Enviar a Fullarg"}
+                                </button>
+                              </div>
                             )}
                           {order.shippingZipnovaShipmentId && (
                             <a

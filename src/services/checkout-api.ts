@@ -272,8 +272,15 @@ export function generateShippingLabel(
   return postOrderAction(orderId, "shipping-label", { warehouseId });
 }
 
-export function sendOrderToFullarg(orderId: string): Promise<Order> {
-  return postOrderAction(orderId, "send-to-fullarg");
+export function sendOrderToFullarg(
+  orderId: string,
+  shippingMethod?: string,
+): Promise<Order> {
+  return postOrderAction(
+    orderId,
+    "send-to-fullarg",
+    shippingMethod ? { shippingMethod } : {},
+  );
 }
 
 export function resetShippingLabel(orderId: string): Promise<Order> {
