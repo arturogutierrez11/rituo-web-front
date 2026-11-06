@@ -199,6 +199,7 @@ async function postOrderAction(
     | "return"
     | "shipping-label"
     | "shipping-label/reset"
+    | "send-to-fullarg"
     | "reserve-stock"
     | "assign-dispatcher",
   body?: unknown,
@@ -269,6 +270,10 @@ export function generateShippingLabel(
   warehouseId: string,
 ): Promise<Order> {
   return postOrderAction(orderId, "shipping-label", { warehouseId });
+}
+
+export function sendOrderToFullarg(orderId: string): Promise<Order> {
+  return postOrderAction(orderId, "send-to-fullarg");
 }
 
 export function resetShippingLabel(orderId: string): Promise<Order> {

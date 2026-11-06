@@ -88,6 +88,7 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
       | "return"
       | "shipping-label"
       | "shipping-label/reset"
+      | "send-to-fullarg"
       | "reserve-stock"
       | "assign-dispatcher",
     body?: unknown,
@@ -257,7 +258,23 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                           )}
                           <div>
                             <span>Detalle de envío</span>
-                            {order.shippingZipnovaShipmentId ? (
+                            {order.fullargSalesOrder ? (
+                              <>
+                                <p>Fullarg · {order.fullargSalesOrder}</p>
+                                {order.fullargSentAt && (
+                                  <p>Enviada a Fullarg el {formatDateTime(order.fullargSentAt)}</p>
+                                )}
+                                {order.fullargStatus && (
+                                  <p>Último aviso: {order.fullargStatus}</p>
+                                )}
+                                {order.shippingTrackingNumber && (
+                                  <p>
+                                    {order.shippingCarrier ?? "Seguimiento"} ·{" "}
+                                    {order.shippingTrackingNumber}
+                                  </p>
+                                )}
+                              </>
+                            ) : order.shippingZipnovaShipmentId ? (
                               <>
                                 <p>
                                   {order.shippingCarrier ?? "Correo Argentino"}
@@ -420,6 +437,7 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                         <div className="order-detail__actions">
                           {order.status === "approved" &&
                             !order.shippingZipnovaShipmentId &&
+                            !order.fullargSalesOrder &&
                             warehouses.length > 0 && (
                               <div className="order-detail__label-picker">
                                 <select
@@ -470,6 +488,26 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                                   {isLoading ? "Generando…" : "Generar etiqueta de envío"}
                                 </button>
                               </div>
+                            )}
+                          {order.status === "approved" &&
+                            !order.fullargSalesOrder &&
+                            !order.shippingZipnovaShipmentId && (
+                              <button
+                                className="order-action"
+                                disabled={isLoading}
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      "Se le envían a Fullarg los datos de esta orden para que la empaqueten y despachen. ¿Confirmás?",
+                                    )
+                                  ) {
+                                    void runAction(order.id, "send-to-fullarg");
+                                  }
+                                }}
+                                type="button"
+                              >
+                                {isLoading ? "Enviando…" : "Enviar a Fullarg"}
+                              </button>
                             )}
                           {order.shippingZipnovaShipmentId && (
                             <a

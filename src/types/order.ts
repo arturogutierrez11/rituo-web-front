@@ -81,6 +81,9 @@ export interface Order {
   shippingRealCost: number | null;
   shippingZipnovaShipmentId: string | null;
   shippingZipnovaStatus: string | null;
+  fullargSalesOrder: string | null;
+  fullargStatus: string | null;
+  fullargSentAt: string | null;
 
   invoiceStatus: string | null;
   invoicedAt: string | null;
