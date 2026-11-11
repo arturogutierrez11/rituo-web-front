@@ -1,11 +1,12 @@
 /**
  * Opciones del desplegable "Enviar a Fullarg". El `value` se manda tal cual como
- * `shipping_method` en create_order.
+ * `shipping_method` (raíz del body de create_order).
  *
- * ⚠️ La doc pública de Fullarg no lista los valores válidos (solo menciona
- * `shipping_method` como alias de Flex). Los valores de abajo son una suposición
- * hasta que Fullarg confirme los códigos reales: si rechazan alguno, el panel
- * muestra su error y alcanza con corregir el `value` acá.
+ * Confirmado por Fullarg: es texto libre, no un enum. "Flex" (o "same_day" /
+ * "envío en el día") es envío en el día; para correo va el nombre del carrier,
+ * por ejemplo "Andreani" o "Correo Argentino". Cualquier texto con "flex" se toma
+ * como Flex. Un carrier mal escrito NO da error: queda como texto en la
+ * "Modalidad" de Fullarg, así que respetá el nombre exacto.
  */
 export interface FullargShippingMethodOption {
   value: string;
@@ -13,9 +14,8 @@ export interface FullargShippingMethodOption {
 }
 
 export const FULLARG_SHIPPING_METHODS: FullargShippingMethodOption[] = [
-  { value: "", label: "Que decida Fullarg" },
-  { value: "flex", label: "Flex (envío en el día)" },
-  { value: "andreani", label: "Andreani" },
-  { value: "oca", label: "OCA" },
-  { value: "correo_argentino", label: "Correo Argentino" },
+  { value: "", label: "Sin especificar (sale “sin dato”)" },
+  { value: "Flex", label: "Flex (envío en el día)" },
+  { value: "Andreani", label: "Andreani" },
+  { value: "Correo Argentino", label: "Correo Argentino" },
 ];
