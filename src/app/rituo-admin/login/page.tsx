@@ -12,6 +12,7 @@ function AdminLoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -48,52 +49,97 @@ function AdminLoginForm() {
 
   return (
     <main className="admin-login">
-      <form className="admin-login__card waitlist-form" onSubmit={handleSubmit}>
-        <div className="waitlist-form__header">
-          <span>Rituo Admin</span>
-          <strong>Iniciá sesión</strong>
-        </div>
+      <section className="admin-login__shell">
+        <aside className="admin-login__brand" aria-hidden="true">
+          <span className="admin-login__wordmark">
+            rituo<i />
+          </span>
 
-        <label>
-          Email
-          <input
-            autoComplete="username"
-            name="email"
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="tu@rituo.io"
-            required
-            type="email"
-            value={email}
-          />
-        </label>
+          <div className="admin-login__pitch">
+            <span>Panel interno</span>
+            <h2>Todo Rituo en un solo lugar.</h2>
+            <ul>
+              <li>Órdenes, pagos y envíos al día</li>
+              <li>Inventario y depósitos</li>
+              <li>Versiones de la app y avisos legales</li>
+            </ul>
+          </div>
 
-        <label>
-          Contraseña
-          <input
-            autoComplete="current-password"
-            name="password"
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
-            required
-            type="password"
-            value={password}
-          />
-        </label>
+          <small>Acceso exclusivo para el equipo.</small>
+        </aside>
 
-        <button
-          className="waitlist-form__submit"
-          disabled={status === "loading"}
-          type="submit"
-        >
-          {status === "loading" ? "Ingresando..." : "Ingresar"}
-        </button>
+        <form className="admin-login__form" onSubmit={handleSubmit}>
+          <div className="admin-login__header">
+            <span className="admin-login__wordmark admin-login__wordmark--small">
+              rituo<i />
+            </span>
+            <h1>Iniciá sesión</h1>
+            <p>Ingresá con tu cuenta del equipo para entrar al panel.</p>
+          </div>
 
-        {status === "error" && (
-          <p className="waitlist-form__notice waitlist-form__notice--error" role="alert">
-            {errorMessage}
+          <label className="admin-login__field">
+            <span>Email</span>
+            <input
+              autoComplete="username"
+              autoFocus
+              name="email"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="tu@rituo.io"
+              required
+              type="email"
+              value={email}
+            />
+          </label>
+
+          <label className="admin-login__field">
+            <span>Contraseña</span>
+            <div className="admin-login__password">
+              <input
+                autoComplete="current-password"
+                name="password"
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                required
+                type={showPassword ? "text" : "password"}
+                value={password}
+              />
+              <button
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((value) => !value)}
+                type="button"
+              >
+                {showPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            </div>
+          </label>
+
+          {status === "error" && (
+            <p className="admin-login__error" role="alert">
+              {errorMessage}
+            </p>
+          )}
+
+          <button
+            className="admin-login__submit"
+            disabled={status === "loading"}
+            type="submit"
+          >
+            {status === "loading" ? (
+              <>
+                <span className="admin-login__spinner" aria-hidden="true" />
+                Ingresando…
+              </>
+            ) : (
+              "Ingresar"
+            )}
+          </button>
+
+          <p className="admin-login__help">
+            ¿Problemas para entrar? Pedile a otra persona del equipo que revise tu acceso.
           </p>
-        )}
-      </form>
+        </form>
+      </section>
     </main>
   );
 }

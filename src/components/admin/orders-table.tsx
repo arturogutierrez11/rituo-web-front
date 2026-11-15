@@ -40,6 +40,65 @@ const SHIPPING_STATUS_OPTIONS: ShippingStatusValue[] = [
   "cancelled",
 ];
 
+const CHANNEL_LABELS: Record<Order["salesChannel"], string> = {
+  mercadopago: "Mercado Pago",
+  bank_transfer: "Transferencia",
+  manual: "Venta manual",
+};
+
+/** Quién se encarga de despachar la orden, para verlo sin abrir el detalle. */
+function logisticsSummary(order: Order): { label: string; detail: string | null } {
+  if (order.fullargSalesOrder) {
+    return {
+      label: "Fullarg",
+      detail: order.shippingTrackingNumber ?? order.fullargSalesOrder,
+    };
+  }
+
+  if (order.shippingZipnovaShipmentId) {
+    return {
+      label: order.shippingCarrier ?? "Zipnova",
+      detail: order.shippingTrackingNumber,
+    };
+  }
+
+  if (order.shippingCarrier || order.shippingTrackingNumber) {
+    return {
+      label: order.shippingCarrier ?? "Envío manual",
+      detail: order.shippingTrackingNumber,
+    };
+  }
+
+  return { label: "Sin logística", detail: null };
+}
+
+function matchesQuery(order: Order, query: string): boolean {
+  const haystack = [
+    order.id,
+    order.customerFirstName,
+    order.customerLastName,
+    order.customerEmail,
+    order.customerPhone,
+    order.productName,
+    order.productSku,
+    order.shippingCity,
+    order.shippingProvince,
+    order.shippingCarrier,
+    order.shippingTrackingNumber,
+    order.fullargSalesOrder,
+    order.assignedDispatcher,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((term) => haystack.includes(term));
+}
+
 function StatusBadge({ status }: { status: Order["status"] }) {
   return (
     <span className={`order-status-badge order-status-badge--${status}`}>
@@ -58,6 +117,10 @@ function ShippingStatusBadge({ status }: { status: ShippingStatusValue }) {
 
 export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProps) {
   const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [shippingFilter, setShippingFilter] = useState<ShippingStatusValue | "all">(
+    "all",
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [shipFormId, setShipFormId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -80,6 +143,16 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
       </div>
     );
   }
+
+  const shippingCounts = orders.reduce<Record<string, number>>((acc, order) => {
+    acc[order.shippingStatus] = (acc[order.shippingStatus] ?? 0) + 1;
+    return acc;
+  }, {});
+  const visibleOrders = orders.filter(
+    (order) =>
+      (shippingFilter === "all" || order.shippingStatus === shippingFilter) &&
+      matchesQuery(order, query.trim()),
+  );
 
   async function runAction(
     orderId: string,
@@ -137,8 +210,52 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
   }
 
   return (
-    <div className="admin-table-wrap">
-      <table className="admin-table">
+    <>
+      <div className="orders-toolbar">
+        <label className="orders-search">
+          <svg aria-hidden="true" viewBox="0 0 20 20">
+            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <path d="m13.2 13.2 3.6 3.6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
+          </svg>
+          <input
+            aria-label="Buscar órdenes"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar por cliente, email, ciudad, producto, seguimiento…"
+            type="search"
+            value={query}
+          />
+        </label>
+
+        <div className="orders-chips" role="group" aria-label="Filtrar por envío">
+          <button
+            className={`orders-chip${shippingFilter === "all" ? " is-active" : ""}`}
+            onClick={() => setShippingFilter("all")}
+            type="button"
+          >
+            Todos <b>{orders.length}</b>
+          </button>
+          {SHIPPING_STATUS_OPTIONS.map((option) => (
+            <button
+              className={`orders-chip${shippingFilter === option ? " is-active" : ""}`}
+              key={option}
+              onClick={() => setShippingFilter(option)}
+              type="button"
+            >
+              {SHIPPING_STATUS_LABELS[option]} <b>{shippingCounts[option] ?? 0}</b>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {visibleOrders.length === 0 && (
+        <div className="admin-empty">
+          <strong>Ninguna orden coincide.</strong>
+          <p>Probá con otra búsqueda o quitá el filtro de envío.</p>
+        </div>
+      )}
+
+      <div className="admin-table-wrap">
+      <table className="admin-table orders-table">
         <thead>
           <tr>
             <th>Orden</th>
@@ -148,11 +265,11 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
             <th>Pago</th>
             <th>Envío</th>
             <th>Responsable</th>
-            <th>Fecha</th>
           </tr>
         </thead>
         <tbody>
-          {orders.map((order) => {
+          {visibleOrders.map((order) => {
+            const logistics = logisticsSummary(order);
             const isExpanded = expandedId === order.id;
             const isLoading = loadingId === order.id;
             const error = errorByOrder[order.id];
@@ -163,48 +280,70 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
             return (
               <Fragment key={order.id}>
                 <tr
-                  className="order-row"
+                  className={`order-row${isExpanded ? " is-open" : ""}`}
                   onClick={() =>
                     setExpandedId((current) => (current === order.id ? null : order.id))
                   }
                 >
-                  <td>
-                    <div className="admin-lead">
-                      <span>
-                        <strong>{order.id.slice(0, 8)}</strong>
-                        <small>{order.productSku}</small>
-                      </span>
+                  <td data-label="Orden">
+                    <div className="admin-date">
+                      <strong className="orders-id">#{order.id.slice(0, 8)}</strong>
+                      <small>{formatDateTime(order.createdAt)}</small>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Cliente">
                     <div className="admin-contact">
                       <a href={`mailto:${order.customerEmail}`} onClick={(e) => e.stopPropagation()}>
                         {order.customerFirstName} {order.customerLastName}
                       </a>
                       <span>{order.customerEmail}</span>
+                      <span>
+                        {order.shippingCity}, {order.shippingProvince}
+                      </span>
                     </div>
                   </td>
-                  <td>
-                    {order.productName} × {order.quantity}
-                  </td>
-                  <td>{formatCurrency(order.total, order.currency)}</td>
-                  <td>
-                    <StatusBadge status={order.status} />
-                    {isInvoiced && <span className="order-invoiced-tag">Facturada</span>}
-                  </td>
-                  <td>
-                    <ShippingStatusBadge status={order.shippingStatus} />
-                  </td>
-                  <td>{order.assignedDispatcher ?? "Sin asignar"}</td>
-                  <td>
-                    <div className="admin-date">
-                      <strong>{formatDateTime(order.createdAt)}</strong>
+                  <td data-label="Producto">
+                    <div className="admin-contact">
+                      <strong className="orders-product">
+                        {order.productName} <em>×{order.quantity}</em>
+                      </strong>
+                      <span>{order.productSku}</span>
                     </div>
+                  </td>
+                  <td data-label="Total">
+                    <div className="admin-contact">
+                      <strong className="orders-total">
+                        {formatCurrency(order.total, order.currency)}
+                      </strong>
+                      <span>{CHANNEL_LABELS[order.salesChannel] ?? order.salesChannel}</span>
+                    </div>
+                  </td>
+                  <td data-label="Pago">
+                    <div className="orders-stack">
+                      <StatusBadge status={order.status} />
+                      {isInvoiced && <span className="order-invoiced-tag">Facturada</span>}
+                    </div>
+                  </td>
+                  <td data-label="Envío">
+                    <div className="orders-stack">
+                      <ShippingStatusBadge status={order.shippingStatus} />
+                      <span className="orders-logistics">
+                        <b>{logistics.label}</b>
+                        {logistics.detail && <small>{logistics.detail}</small>}
+                      </span>
+                    </div>
+                  </td>
+                  <td data-label="Responsable">
+                    <span
+                      className={`orders-owner${order.assignedDispatcher ? "" : " is-empty"}`}
+                    >
+                      {order.assignedDispatcher ?? "Sin asignar"}
+                    </span>
                   </td>
                 </tr>
                 {isExpanded && (
                   <tr className="order-detail-row">
-                    <td colSpan={8}>
+                    <td colSpan={7}>
                       <div className="order-detail">
                         <div className="order-detail__grid">
                           <div>
@@ -630,6 +769,7 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
           })}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }

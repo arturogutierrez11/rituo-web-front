@@ -80,6 +80,9 @@ export default async function RituoAdminOrdersPage({
 
   const approvedOrders = orders.filter((order) => order.status === "approved");
   const pendingCount = orders.filter((order) => order.status === "pending").length;
+  const toDispatchCount = approvedOrders.filter(
+    (order) => order.shippingStatus === "pending_dispatch",
+  ).length;
   const revenue = approvedOrders.reduce((sum, order) => sum + order.total, 0);
   const currency = orders[0]?.currency ?? "ARS";
 
@@ -114,6 +117,11 @@ export default async function RituoAdminOrdersPage({
         <div className="admin-stats" aria-label="Resumen de órdenes">
           <AdminStatCard detail="En este filtro" label="Órdenes" value={orders.length} />
           <AdminStatCard detail="Sin pagar todavía" label="Pendientes" value={pendingCount} />
+          <AdminStatCard
+            detail="Aprobadas sin despachar"
+            label="Por despachar"
+            value={toDispatchCount}
+          />
           <AdminStatCard
             detail="Suma de órdenes aprobadas"
             label="Recaudado"
