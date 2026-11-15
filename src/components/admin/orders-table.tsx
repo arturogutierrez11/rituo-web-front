@@ -1,17 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { FULLARG_SHIPPING_METHODS } from "@/data/fullarg-shipping-methods";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
 import type { Order, ShippingStatusValue } from "@/types/order";
+import type { ProductCommerce } from "@/types/product";
 import type { Warehouse } from "@/types/warehouse";
 
 interface OrdersTableProps {
   orders: Order[];
+  products: ProductCommerce[];
   warehouses: Warehouse[];
   dispatchers: string[];
 }
@@ -39,6 +41,28 @@ const SHIPPING_STATUS_OPTIONS: ShippingStatusValue[] = [
   "delivered",
   "cancelled",
 ];
+
+/** Tope del desplegable de unidades (se amplía si la orden pide más). */
+const FULLARG_MAX_UNITS = 20;
+
+/** Logo en public/images/fullarg-logo.png; si todavía no está, el botón queda solo con texto. */
+function FullargLogo() {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return null;
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      alt=""
+      className="fullarg-logo"
+      onError={() => setFailed(true)}
+      src="/images/fullarg-logo.png"
+    />
+  );
+}
 
 const CHANNEL_LABELS: Record<Order["salesChannel"], string> = {
   mercadopago: "Mercado Pago",
@@ -115,18 +139,45 @@ function ShippingStatusBadge({ status }: { status: ShippingStatusValue }) {
   );
 }
 
-export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProps) {
+export function OrdersTable({
+  orders,
+  products,
+  warehouses,
+  dispatchers,
+}: OrdersTableProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [shippingFilter, setShippingFilter] = useState<ShippingStatusValue | "all">(
     "all",
   );
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!expandedId) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setExpandedId(null);
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [expandedId]);
   const [shipFormId, setShipFormId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [errorByOrder, setErrorByOrder] = useState<Record<string, string>>({});
   const [pendingShippingStatus, setPendingShippingStatus] = useState<
     Record<string, ShippingStatusValue>
+  >({});
+  const [fullargUnitsByOrder, setFullargUnitsByOrder] = useState<
+    Record<string, number>
   >({});
   const [fullargMethodByOrder, setFullargMethodByOrder] = useState<
     Record<string, string>
@@ -209,142 +260,141 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
     });
   }
 
-  return (
-    <>
-      <div className="orders-toolbar">
-        <label className="orders-search">
-          <svg aria-hidden="true" viewBox="0 0 20 20">
-            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
-            <path d="m13.2 13.2 3.6 3.6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
-          </svg>
-          <input
-            aria-label="Buscar órdenes"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar por cliente, email, ciudad, producto, seguimiento…"
-            type="search"
-            value={query}
-          />
-        </label>
+  const selectedOrder = orders.find((order) => order.id === expandedId) ?? null;
 
-        <div className="orders-chips" role="group" aria-label="Filtrar por envío">
-          <button
-            className={`orders-chip${shippingFilter === "all" ? " is-active" : ""}`}
-            onClick={() => setShippingFilter("all")}
-            type="button"
-          >
-            Todos <b>{orders.length}</b>
-          </button>
-          {SHIPPING_STATUS_OPTIONS.map((option) => (
-            <button
-              className={`orders-chip${shippingFilter === option ? " is-active" : ""}`}
-              key={option}
-              onClick={() => setShippingFilter(option)}
-              type="button"
+  function closeDrawer() {
+    setExpandedId(null);
+    setShipFormId(null);
+  }
+
+  function defaultFullargUnits(order: Order): number {
+    const product = products.find((item) => item.sku === order.productSku);
+    return order.quantity * (product?.bundleUnits ?? 1);
+  }
+
+  function renderFullargBox(order: Order, isLoading: boolean) {
+    if (order.fullargSalesOrder) {
+      return (
+        <section className="fullarg-box fullarg-box--sent">
+          <div className="fullarg-box__head">
+            <FullargLogo />
+            <strong>Enviada a Fullarg</strong>
+          </div>
+          <p>
+            {order.fullargSalesOrder}
+            {order.fullargStatus ? ` · ${order.fullargStatus}` : ""}
+          </p>
+          {order.fullargSentAt && (
+            <small>El {formatDateTime(order.fullargSentAt)}</small>
+          )}
+        </section>
+      );
+    }
+
+    if (order.status !== "approved" || order.shippingZipnovaShipmentId) {
+      return null;
+    }
+
+    const orderUnits = defaultFullargUnits(order);
+    const units = fullargUnitsByOrder[order.id] ?? orderUnits;
+    const method = fullargMethodByOrder[order.id] ?? "";
+    const methodLabel =
+      FULLARG_SHIPPING_METHODS.find((option) => option.value === method)?.label ??
+      "Que decida Fullarg";
+    const maxUnits = Math.max(FULLARG_MAX_UNITS, orderUnits);
+
+    return (
+      <section className="fullarg-box">
+        <div className="fullarg-box__head">
+          <FullargLogo />
+          <strong>Despachar con Fullarg</strong>
+        </div>
+
+        <div className="fullarg-box__fields">
+          <label>
+            <span>Unidades a enviar</span>
+            <select
+              disabled={isLoading}
+              onChange={(event) =>
+                setFullargUnitsByOrder((prev) => ({
+                  ...prev,
+                  [order.id]: Number(event.target.value),
+                }))
+              }
+              value={units}
             >
-              {SHIPPING_STATUS_LABELS[option]} <b>{shippingCounts[option] ?? 0}</b>
-            </button>
-          ))}
+              {Array.from({ length: maxUnits }, (_, index) => index + 1).map((count) => (
+                <option key={count} value={count}>
+                  {count} {count === 1 ? "unidad" : "unidades"}
+                  {count === orderUnits ? " · lo que pide la orden" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Operador logístico</span>
+            <select
+              disabled={isLoading}
+              onChange={(event) =>
+                setFullargMethodByOrder((prev) => ({
+                  ...prev,
+                  [order.id]: event.target.value,
+                }))
+              }
+              value={method}
+            >
+              {FULLARG_SHIPPING_METHODS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-      </div>
 
-      {visibleOrders.length === 0 && (
-        <div className="admin-empty">
-          <strong>Ninguna orden coincide.</strong>
-          <p>Probá con otra búsqueda o quitá el filtro de envío.</p>
-        </div>
-      )}
+        {units !== orderUnits && (
+          <p className="fullarg-box__hint">
+            La orden pide {orderUnits} {orderUnits === 1 ? "unidad" : "unidades"} y vas a
+            mandar {units}. Sirve, por ejemplo, para regalos.
+          </p>
+        )}
 
-      <div className="admin-table-wrap">
-      <table className="admin-table orders-table">
-        <thead>
-          <tr>
-            <th>Orden</th>
-            <th>Cliente</th>
-            <th>Producto</th>
-            <th>Total</th>
-            <th>Pago</th>
-            <th>Envío</th>
-            <th>Responsable</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visibleOrders.map((order) => {
-            const logistics = logisticsSummary(order);
-            const isExpanded = expandedId === order.id;
-            const isLoading = loadingId === order.id;
-            const error = errorByOrder[order.id];
-            const selectedShippingStatus =
-              pendingShippingStatus[order.id] ?? order.shippingStatus;
-            const isInvoiced = order.invoiceStatus === "invoiced";
+        <button
+          className="fullarg-send"
+          disabled={isLoading}
+          onClick={() => {
+            if (
+              window.confirm(
+                `Se le envían a Fullarg los datos de esta orden para que la empaqueten y despachen.\n\nUnidades: ${units}\nOperador: ${methodLabel}\n\n¿Confirmás?`,
+              )
+            ) {
+              void runAction(order.id, "send-to-fullarg", {
+                quantity: units,
+                ...(method ? { shippingMethod: method } : {}),
+              });
+            }
+          }}
+          type="button"
+        >
+          <FullargLogo />
+          <span>{isLoading ? "Enviando…" : "Enviar a Fullarg"}</span>
+        </button>
+      </section>
+    );
+  }
 
-            return (
-              <Fragment key={order.id}>
-                <tr
-                  className={`order-row${isExpanded ? " is-open" : ""}`}
-                  onClick={() =>
-                    setExpandedId((current) => (current === order.id ? null : order.id))
-                  }
-                >
-                  <td data-label="Orden">
-                    <div className="admin-date">
-                      <strong className="orders-id">#{order.id.slice(0, 8)}</strong>
-                      <small>{formatDateTime(order.createdAt)}</small>
-                    </div>
-                  </td>
-                  <td data-label="Cliente">
-                    <div className="admin-contact">
-                      <a href={`mailto:${order.customerEmail}`} onClick={(e) => e.stopPropagation()}>
-                        {order.customerFirstName} {order.customerLastName}
-                      </a>
-                      <span>{order.customerEmail}</span>
-                      <span>
-                        {order.shippingCity}, {order.shippingProvince}
-                      </span>
-                    </div>
-                  </td>
-                  <td data-label="Producto">
-                    <div className="admin-contact">
-                      <strong className="orders-product">
-                        {order.productName} <em>×{order.quantity}</em>
-                      </strong>
-                      <span>{order.productSku}</span>
-                    </div>
-                  </td>
-                  <td data-label="Total">
-                    <div className="admin-contact">
-                      <strong className="orders-total">
-                        {formatCurrency(order.total, order.currency)}
-                      </strong>
-                      <span>{CHANNEL_LABELS[order.salesChannel] ?? order.salesChannel}</span>
-                    </div>
-                  </td>
-                  <td data-label="Pago">
-                    <div className="orders-stack">
-                      <StatusBadge status={order.status} />
-                      {isInvoiced && <span className="order-invoiced-tag">Facturada</span>}
-                    </div>
-                  </td>
-                  <td data-label="Envío">
-                    <div className="orders-stack">
-                      <ShippingStatusBadge status={order.shippingStatus} />
-                      <span className="orders-logistics">
-                        <b>{logistics.label}</b>
-                        {logistics.detail && <small>{logistics.detail}</small>}
-                      </span>
-                    </div>
-                  </td>
-                  <td data-label="Responsable">
-                    <span
-                      className={`orders-owner${order.assignedDispatcher ? "" : " is-empty"}`}
-                    >
-                      {order.assignedDispatcher ?? "Sin asignar"}
-                    </span>
-                  </td>
-                </tr>
-                {isExpanded && (
-                  <tr className="order-detail-row">
-                    <td colSpan={7}>
+  function renderDetail(order: Order) {
+    const isLoading = loadingId === order.id;
+    const error = errorByOrder[order.id];
+    const selectedShippingStatus =
+      pendingShippingStatus[order.id] ?? order.shippingStatus;
+    const isInvoiced = order.invoiceStatus === "invoiced";
+
+    return (
                       <div className="order-detail">
+                        {renderFullargBox(order, isLoading)}
+
                         <div className="order-detail__grid">
                           <div>
                             <span>Envío</span>
@@ -633,57 +683,6 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                                 </button>
                               </div>
                             )}
-                          {order.status === "approved" &&
-                            !order.fullargSalesOrder &&
-                            !order.shippingZipnovaShipmentId && (
-                              <div className="order-detail__label-picker">
-                                <select
-                                  aria-label="Operador logístico de Fullarg"
-                                  disabled={isLoading}
-                                  onChange={(event) =>
-                                    setFullargMethodByOrder((prev) => ({
-                                      ...prev,
-                                      [order.id]: event.target.value,
-                                    }))
-                                  }
-                                  onClick={(event) => event.stopPropagation()}
-                                  value={fullargMethodByOrder[order.id] ?? ""}
-                                >
-                                  {FULLARG_SHIPPING_METHODS.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                <button
-                                  className="order-action"
-                                  disabled={isLoading}
-                                  onClick={() => {
-                                    const method =
-                                      fullargMethodByOrder[order.id] ?? "";
-                                    const methodLabel =
-                                      FULLARG_SHIPPING_METHODS.find(
-                                        (option) => option.value === method,
-                                      )?.label ?? "Que decida Fullarg";
-
-                                    if (
-                                      window.confirm(
-                                        `Se le envían a Fullarg los datos de esta orden para que la empaqueten y despachen.\n\nOperador: ${methodLabel}\n\n¿Confirmás?`,
-                                      )
-                                    ) {
-                                      void runAction(
-                                        order.id,
-                                        "send-to-fullarg",
-                                        method ? { shippingMethod: method } : {},
-                                      );
-                                    }
-                                  }}
-                                  type="button"
-                                >
-                                  {isLoading ? "Enviando…" : "Enviar a Fullarg"}
-                                </button>
-                              </div>
-                            )}
                           {order.shippingZipnovaShipmentId && (
                             <a
                               className="order-action"
@@ -761,15 +760,195 @@ export function OrdersTable({ orders, warehouses, dispatchers }: OrdersTableProp
                           )}
                         </div>
                       </div>
-                    </td>
-                  </tr>
-                )}
+    );
+  }
+
+  return (
+    <>
+      <div className="orders-toolbar">
+        <label className="orders-search">
+          <svg aria-hidden="true" viewBox="0 0 20 20">
+            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <path d="m13.2 13.2 3.6 3.6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
+          </svg>
+          <input
+            aria-label="Buscar órdenes"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar por cliente, email, ciudad, producto, seguimiento…"
+            type="search"
+            value={query}
+          />
+        </label>
+
+        <div className="orders-chips" role="group" aria-label="Filtrar por envío">
+          <button
+            className={`orders-chip${shippingFilter === "all" ? " is-active" : ""}`}
+            onClick={() => setShippingFilter("all")}
+            type="button"
+          >
+            Todos <b>{orders.length}</b>
+          </button>
+          {SHIPPING_STATUS_OPTIONS.map((option) => (
+            <button
+              className={`orders-chip${shippingFilter === option ? " is-active" : ""}`}
+              key={option}
+              onClick={() => setShippingFilter(option)}
+              type="button"
+            >
+              {SHIPPING_STATUS_LABELS[option]} <b>{shippingCounts[option] ?? 0}</b>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {visibleOrders.length === 0 && (
+        <div className="admin-empty">
+          <strong>Ninguna orden coincide.</strong>
+          <p>Probá con otra búsqueda o quitá el filtro de envío.</p>
+        </div>
+      )}
+
+      <div className="admin-table-wrap">
+      <table className="admin-table orders-table">
+        <thead>
+          <tr>
+            <th>Orden</th>
+            <th>Cliente</th>
+            <th>Producto</th>
+            <th>Total</th>
+            <th>Pago</th>
+            <th>Envío</th>
+            <th>Responsable</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visibleOrders.map((order) => {
+            const logistics = logisticsSummary(order);
+            const isExpanded = expandedId === order.id;
+            const isInvoiced = order.invoiceStatus === "invoiced";
+
+            return (
+              <Fragment key={order.id}>
+                <tr
+                  className={`order-row${isExpanded ? " is-open" : ""}`}
+                  onClick={() => setExpandedId(order.id)}
+                >
+                  <td data-label="Orden">
+                    <div className="admin-date">
+                      <strong className="orders-id">#{order.id.slice(0, 8)}</strong>
+                      <small>{formatDateTime(order.createdAt)}</small>
+                    </div>
+                  </td>
+                  <td data-label="Cliente">
+                    <div className="admin-contact">
+                      <a href={`mailto:${order.customerEmail}`} onClick={(e) => e.stopPropagation()}>
+                        {order.customerFirstName} {order.customerLastName}
+                      </a>
+                      <span>{order.customerEmail}</span>
+                      <span>
+                        {order.shippingCity}, {order.shippingProvince}
+                      </span>
+                    </div>
+                  </td>
+                  <td data-label="Producto">
+                    <div className="admin-contact">
+                      <strong className="orders-product">
+                        {order.productName} <em>×{order.quantity}</em>
+                      </strong>
+                      <span>{order.productSku}</span>
+                    </div>
+                  </td>
+                  <td data-label="Total">
+                    <div className="admin-contact">
+                      <strong className="orders-total">
+                        {formatCurrency(order.total, order.currency)}
+                      </strong>
+                      <span>{CHANNEL_LABELS[order.salesChannel] ?? order.salesChannel}</span>
+                    </div>
+                  </td>
+                  <td data-label="Pago">
+                    <div className="orders-stack">
+                      <StatusBadge status={order.status} />
+                      {isInvoiced && <span className="order-invoiced-tag">Facturada</span>}
+                    </div>
+                  </td>
+                  <td data-label="Envío">
+                    <div className="orders-stack">
+                      <ShippingStatusBadge status={order.shippingStatus} />
+                      <span className="orders-logistics">
+                        <b>{logistics.label}</b>
+                        {logistics.detail && <small>{logistics.detail}</small>}
+                      </span>
+                    </div>
+                  </td>
+                  <td data-label="Responsable">
+                    <span
+                      className={`orders-owner${order.assignedDispatcher ? "" : " is-empty"}`}
+                    >
+                      {order.assignedDispatcher ?? "Sin asignar"}
+                    </span>
+                  </td>
+                </tr>
               </Fragment>
             );
           })}
         </tbody>
       </table>
       </div>
+
+      {selectedOrder && (
+        <>
+          <div className="order-drawer-overlay" onClick={closeDrawer} />
+          <aside
+            aria-label={`Detalle de la orden ${selectedOrder.id.slice(0, 8)}`}
+            aria-modal="true"
+            className="order-drawer"
+            role="dialog"
+          >
+            <header className="order-drawer__head">
+              <div>
+                <span>Orden</span>
+                <h2>#{selectedOrder.id.slice(0, 8)}</h2>
+                <small>{formatDateTime(selectedOrder.createdAt)}</small>
+              </div>
+              <button
+                aria-label="Cerrar detalle"
+                className="order-drawer__close"
+                onClick={closeDrawer}
+                type="button"
+              >
+                ×
+              </button>
+            </header>
+
+            <div className="order-drawer__summary">
+              <div>
+                <strong>
+                  {selectedOrder.customerFirstName} {selectedOrder.customerLastName}
+                </strong>
+                <a href={`mailto:${selectedOrder.customerEmail}`}>
+                  {selectedOrder.customerEmail}
+                </a>
+                {selectedOrder.customerPhone && <span>{selectedOrder.customerPhone}</span>}
+              </div>
+              <div>
+                <strong>
+                  {formatCurrency(selectedOrder.total, selectedOrder.currency)}
+                </strong>
+                <span>
+                  {selectedOrder.productName} ×{selectedOrder.quantity}
+                </span>
+              </div>
+              <div className="order-drawer__badges">
+                <StatusBadge status={selectedOrder.status} />
+                <ShippingStatusBadge status={selectedOrder.shippingStatus} />
+              </div>
+            </div>
+
+            <div className="order-drawer__body">{renderDetail(selectedOrder)}</div>
+          </aside>
+        </>
+      )}
     </>
   );
 }

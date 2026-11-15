@@ -25,6 +25,8 @@ export interface ProductCommerce {
   price: number;
   currency: string;
   inStock: boolean;
+  /** Tarjetas físicas que trae este SKU (1, 2, 10). */
+  bundleUnits?: number;
 }
 
 /** Lo que consumen los componentes: marketing + comercial combinados por slug. */

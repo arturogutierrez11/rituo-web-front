@@ -18,6 +18,12 @@ const sections = [
     shortLabel: "OR",
   },
   {
+    href: "/rituo-admin/analytics",
+    label: "Analítica",
+    description: "Ventas y envíos",
+    shortLabel: "AN",
+  },
+  {
     href: "/rituo-admin/inventory",
     label: "Inventario",
     description: "Stock y trazabilidad",

@@ -274,13 +274,12 @@ export function generateShippingLabel(
 
 export function sendOrderToFullarg(
   orderId: string,
-  shippingMethod?: string,
+  options: { shippingMethod?: string; quantity?: number } = {},
 ): Promise<Order> {
-  return postOrderAction(
-    orderId,
-    "send-to-fullarg",
-    shippingMethod ? { shippingMethod } : {},
-  );
+  return postOrderAction(orderId, "send-to-fullarg", {
+    ...(options.shippingMethod ? { shippingMethod: options.shippingMethod } : {}),
+    ...(options.quantity ? { quantity: options.quantity } : {}),
+  });
 }
 
 export function resetShippingLabel(orderId: string): Promise<Order> {

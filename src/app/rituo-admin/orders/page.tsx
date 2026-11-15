@@ -158,6 +158,7 @@ export default async function RituoAdminOrdersPage({
           ) : (
             <OrdersTable
               orders={orders}
+              products={products}
               warehouses={warehouses}
               dispatchers={dispatchers}
             />
