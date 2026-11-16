@@ -45,12 +45,12 @@ const SHIPPING_STATUS_OPTIONS: ShippingStatusValue[] = [
 /** Tope del desplegable de unidades (se amplía si la orden pide más). */
 const FULLARG_MAX_UNITS = 20;
 
-/** Logo en public/images/fullarg-logo.png; si todavía no está, el botón queda solo con texto. */
+/** Logo en public/images/fullarg-logo.png (blanco, para fondo oscuro); si falta, se muestra el nombre. */
 function FullargLogo() {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
-    return null;
+    return <b className="fullarg-wordmark">Fullarg</b>;
   }
 
   return (
@@ -277,8 +277,8 @@ export function OrdersTable({
       return (
         <section className="fullarg-box fullarg-box--sent">
           <div className="fullarg-box__head">
+            <strong>Enviada a</strong>
             <FullargLogo />
-            <strong>Enviada a Fullarg</strong>
           </div>
           <p>
             {order.fullargSalesOrder}
@@ -306,8 +306,8 @@ export function OrdersTable({
     return (
       <section className="fullarg-box">
         <div className="fullarg-box__head">
+          <strong>Despachar con</strong>
           <FullargLogo />
-          <strong>Despachar con Fullarg</strong>
         </div>
 
         <div className="fullarg-box__fields">
@@ -377,8 +377,8 @@ export function OrdersTable({
           }}
           type="button"
         >
+          <span>{isLoading ? "Enviando a" : "Enviar a"}</span>
           <FullargLogo />
-          <span>{isLoading ? "Enviando…" : "Enviar a Fullarg"}</span>
         </button>
       </section>
     );

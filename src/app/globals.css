@@ -2919,11 +2919,17 @@ main { position: relative; z-index: 1; }
   font-weight: 800;
 }
 
-.fullarg-box__head .fullarg-logo {
-  height: 28px;
-  padding: 4px 8px;
-  border-radius: 8px;
-  background: #fff;
+.fullarg-logo {
+  display: block;
+  height: 24px;
+  width: auto;
+}
+
+.fullarg-wordmark {
+  color: #35b6f5;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .fullarg-box__fields {
@@ -2974,22 +2980,27 @@ main { position: relative; z-index: 1; }
   align-items: center;
   justify-content: center;
   gap: 12px;
-  border: 0;
+  border: 1px solid rgba(53, 182, 245, 0.45);
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--navy-900);
+  background: linear-gradient(135deg, #123761, #0a1d38);
+  color: #fff;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
-  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), 0 0 0 0 rgba(53, 182, 245, 0);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
-.fullarg-send:hover { background: #fff; transform: translateY(-2px); }
+.fullarg-send:hover {
+  border-color: rgba(53, 182, 245, 0.9);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34), 0 0 0 4px rgba(53, 182, 245, 0.14);
+  transform: translateY(-2px);
+}
+
 .fullarg-send:disabled { cursor: wait; opacity: 0.65; transform: none; }
 
-.fullarg-send .fullarg-logo { height: 22px; width: auto; }
+.fullarg-send .fullarg-logo { height: 26px; }
 
 @media (max-width: 560px) {
   .order-drawer__summary { grid-template-columns: 1fr; }
