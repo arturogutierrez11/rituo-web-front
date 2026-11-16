@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 
+import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FULLARG_SHIPPING_METHODS } from "@/data/fullarg-shipping-methods";
+import { buildWhatsAppUrl } from "@/lib/customer-whatsapp";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateTime } from "@/lib/format-date";
@@ -261,6 +263,12 @@ export function OrdersTable({
   }
 
   const selectedOrder = orders.find((order) => order.id === expandedId) ?? null;
+  const whatsappUrl = selectedOrder
+    ? buildWhatsAppUrl(
+        selectedOrder.customerPhone,
+        `Hola ${selectedOrder.customerFirstName}, te escribimos de Rituo por tu pedido #${selectedOrder.id.slice(0, 8)}.`,
+      )
+    : null;
 
   function closeDrawer() {
     setExpandedId(null);
@@ -929,7 +937,32 @@ export function OrdersTable({
                 <a href={`mailto:${selectedOrder.customerEmail}`}>
                   {selectedOrder.customerEmail}
                 </a>
-                {selectedOrder.customerPhone && <span>{selectedOrder.customerPhone}</span>}
+                {selectedOrder.customerPhone && (
+                  <div className="order-drawer__phone">
+                    <span>{selectedOrder.customerPhone}</span>
+                    {whatsappUrl ? (
+                      <a
+                        aria-label={`Escribirle a ${selectedOrder.customerFirstName} por WhatsApp`}
+                        className="order-drawer__whatsapp"
+                        href={whatsappUrl}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        title="Escribirle por WhatsApp"
+                      >
+                        <WhatsAppIcon size={18} />
+                        WhatsApp
+                      </a>
+                    ) : (
+                      <span
+                        className="order-drawer__whatsapp is-disabled"
+                        title="No pudimos armar el link: el teléfono no tiene un formato válido"
+                      >
+                        <WhatsAppIcon size={18} />
+                        Teléfono inválido
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <strong>
