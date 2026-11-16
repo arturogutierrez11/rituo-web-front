@@ -220,6 +220,7 @@ export function OrdersTable({
       | "shipping-label"
       | "shipping-label/reset"
       | "send-to-fullarg"
+      | "resend-shipped-email"
       | "reserve-stock"
       | "assign-dispatcher",
     body?: unknown,
@@ -294,6 +295,52 @@ export function OrdersTable({
           </p>
           {order.fullargSentAt && (
             <small>El {formatDateTime(order.fullargSentAt)}</small>
+          )}
+
+          <div className="fullarg-box__tracking">
+            <span>Seguimiento</span>
+            {order.shippingTrackingNumber ? (
+              <p>
+                <strong>{order.shippingTrackingNumber}</strong>
+                {order.shippingCarrier ? ` · ${order.shippingCarrier}` : ""}
+              </p>
+            ) : (
+              <p>Todavía sin número: Fullarg lo informa cuando despacha.</p>
+            )}
+
+            <span>Mail al comprador</span>
+            <p
+              className={order.shippedEmailSentAt ? "is-ok" : undefined}
+            >
+              {order.shippedEmailSentAt
+                ? `Enviado a ${order.customerEmail} el ${formatDateTime(order.shippedEmailSentAt)}`
+                : order.shippingTrackingNumber
+                  ? "Todavía no se envió."
+                  : "Sale solo cuando llegue el número de seguimiento."}
+            </p>
+          </div>
+
+          {order.shippingTrackingNumber && (
+            <button
+              className="order-action"
+              disabled={isLoading}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Se le ${order.shippedEmailSentAt ? "reenvía" : "envía"} a ${order.customerEmail} el mail con el número de seguimiento ${order.shippingTrackingNumber}. ¿Confirmás?`,
+                  )
+                ) {
+                  void runAction(order.id, "resend-shipped-email");
+                }
+              }}
+              type="button"
+            >
+              {isLoading
+                ? "Enviando…"
+                : order.shippedEmailSentAt
+                  ? "Reenviar mail de seguimiento"
+                  : "Enviar mail de seguimiento"}
+            </button>
           )}
         </section>
       );

@@ -84,6 +84,8 @@ export interface Order {
   fullargSalesOrder: string | null;
   fullargStatus: string | null;
   fullargSentAt: string | null;
+  /** Cuándo se le mandó al comprador el mail con el seguimiento (null = todavía no). */
+  shippedEmailSentAt: string | null;
 
   invoiceStatus: string | null;
   invoicedAt: string | null;

@@ -200,6 +200,7 @@ async function postOrderAction(
     | "shipping-label"
     | "shipping-label/reset"
     | "send-to-fullarg"
+    | "resend-shipped-email"
     | "reserve-stock"
     | "assign-dispatcher",
   body?: unknown,
@@ -280,6 +281,10 @@ export function sendOrderToFullarg(
     ...(options.shippingMethod ? { shippingMethod: options.shippingMethod } : {}),
     ...(options.quantity ? { quantity: options.quantity } : {}),
   });
+}
+
+export function resendShippedEmail(orderId: string): Promise<Order> {
+  return postOrderAction(orderId, "resend-shipped-email");
 }
 
 export function resetShippingLabel(orderId: string): Promise<Order> {

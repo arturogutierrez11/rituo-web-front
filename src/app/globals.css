@@ -3080,6 +3080,30 @@ main { position: relative; z-index: 1; }
 
 .fullarg-box--sent { border-color: rgba(140, 210, 150, 0.3); }
 
+.fullarg-box__tracking {
+  display: grid;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.fullarg-box__tracking span {
+  margin-top: 6px;
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fullarg-box__tracking span:first-child { margin-top: 0; }
+
+.fullarg-box__tracking strong { color: var(--ink); }
+
+.fullarg-box__tracking p.is-ok { color: #a8e0b4; }
+
+.fullarg-box--sent .order-action { justify-self: start; }
+
 .fullarg-send {
   display: flex;
   min-height: 52px;
